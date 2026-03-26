@@ -1,29 +1,46 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 type RootLayoutProps = {
   children: ReactNode;
 };
 
+export const metadata = {
+  title: "SAT AI Tutor",
+  description:
+    "Structured SAT practice with concept-level mastery tracking and a policy-aware AI tutor.",
+};
+
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body style={bodyStyle}>
+        <div style={backgroundGlowStyle} aria-hidden />
+        <div style={appFrameStyle}>{children}</div>
+      </body>
     </html>
   );
 }
 
-/*
-TODO(root-layout-foundation):
-Turn this into the minimal app root once auth and data fetching are wired.
+const bodyStyle: CSSProperties = {
+  margin: "0",
+  minHeight: "100vh",
+  position: "relative",
+  background:
+    "radial-gradient(circle at 15% 10%, rgba(30, 64, 175, 0.12), transparent 40%), radial-gradient(circle at 90% 0%, rgba(14, 116, 144, 0.12), transparent 35%), #f3f6fb",
+  color: "#0f172a",
+  fontFamily:
+    "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+};
 
-Scope:
-- Add global providers only when a real feature requires them.
-- Keep auth bootstrapping server-side and do not leak privileged keys to the
-  client.
-- Add route-group layouts later for marketing, student, and admin experiences
-  instead of growing this root layout too much.
+const appFrameStyle: CSSProperties = {
+  position: "relative",
+  minHeight: "100vh",
+};
 
-Naming:
-- Route-group layouts should live beside their route folders and use the
-  reserved `layout.tsx` file name.
-*/
+const backgroundGlowStyle: CSSProperties = {
+  position: "absolute",
+  inset: "0",
+  pointerEvents: "none",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.25) 100%)",
+};

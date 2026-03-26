@@ -1,19 +1,49 @@
+import {
+  tutorContextPrompt,
+  tutorContextPromptVersion,
+} from "./tutor-context";
+import {
+  tutorRevealPolicyPrompt,
+  tutorRevealPolicyPromptVersion,
+} from "./tutor-policy";
+import {
+  tutorSystemPrompt,
+  tutorSystemPromptVersion,
+} from "./tutor-system";
+
 export const promptModules = ["tutor-system", "tutor-policy", "tutor-context"] as const;
 
 export type PromptModule = (typeof promptModules)[number];
 
-/*
-TODO(prompt-pack):
-Turn this package into the shared home for stable prompt text and prompt
-versioning.
+export type PromptTemplate = {
+  module: PromptModule;
+  version: string;
+  text: string;
+};
 
-Scope:
-- Start with tutor system, tutor policy, and tutor context prompts.
-- Keep prompt text separate from runtime data assembly.
-- Add prompt version identifiers so tutor interactions can be audited later.
+export const promptTemplates: Readonly<Record<PromptModule, PromptTemplate>> = {
+  "tutor-context": {
+    module: "tutor-context",
+    version: tutorContextPromptVersion,
+    text: tutorContextPrompt,
+  },
+  "tutor-policy": {
+    module: "tutor-policy",
+    version: tutorRevealPolicyPromptVersion,
+    text: tutorRevealPolicyPrompt,
+  },
+  "tutor-system": {
+    module: "tutor-system",
+    version: tutorSystemPromptVersion,
+    text: tutorSystemPrompt,
+  },
+};
 
-Naming:
-- Use file names like `tutor-system.ts` and `tutor-policy.ts`.
-- Export values with clear names like `tutorSystemPrompt` and
-  `tutorRevealPolicyPrompt`.
-*/
+export {
+  tutorContextPrompt,
+  tutorContextPromptVersion,
+  tutorRevealPolicyPrompt,
+  tutorRevealPolicyPromptVersion,
+  tutorSystemPrompt,
+  tutorSystemPromptVersion,
+};
