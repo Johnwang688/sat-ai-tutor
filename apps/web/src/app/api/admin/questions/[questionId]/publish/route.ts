@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
+import { assertAdminFromRequest } from "@/features/admin/server/auth";
+import { jsonError, withAdminRouteErrors } from "@/features/admin/server/http";
+import { publishQuestion } from "@/features/admin/server/store";
 
-// TODO(admin-routes): Enforce admin role first.
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ questionId: string }> },
+) {
+  return withAdminRouteErrors(async () => {
+    const actor = assertAdminFromRequest(request);
+    const { questionId } = await context.params;
+    const question = publishQuestion(questionId, actor);
 
-// TODO(api/admin-questions): POST — Transition question from draft to published per schema rules.
+    if (!question) {
+      return jsonError("Question not found or already published.", 404);
+    }
 
-// TODO(admin-routes): Write an audit row (who/when/what) for this publish action.
-
-export async function POST() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+    return NextResponse.json({ question });
+  });
 }

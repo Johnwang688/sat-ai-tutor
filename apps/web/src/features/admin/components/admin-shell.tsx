@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
-// TODO(admin-feature): Prefer `Question*` components for vetted bank workflows and `Variant*` for generated-variant review so the two pipelines stay separate in code as well as UX.
-
 type AdminShellProps = {
   title: string;
   summary: string;
@@ -15,7 +13,7 @@ type AdminMetricCardProps = {
   detail: string;
 };
 
-type AdminActionLinkProps = {
+type WorkflowLinkProps = {
   href: string;
   title: string;
   summary: string;
@@ -44,13 +42,25 @@ export function AdminMetricCard({ label, value, detail }: AdminMetricCardProps) 
   );
 }
 
-export function AdminActionLink({ href, title, summary }: AdminActionLinkProps) {
+function WorkflowLink({ href, title, summary }: WorkflowLinkProps) {
   return (
     <Link href={href} style={styles.actionLink}>
       <h2 style={styles.actionTitle}>{title}</h2>
       <p style={styles.actionSummary}>{summary}</p>
     </Link>
   );
+}
+
+export function QuestionWorkflowLink(props: WorkflowLinkProps) {
+  return <WorkflowLink {...props} />;
+}
+
+export function VariantWorkflowLink(props: WorkflowLinkProps) {
+  return <WorkflowLink {...props} />;
+}
+
+export function AdminActionLink(props: WorkflowLinkProps) {
+  return <WorkflowLink {...props} />;
 }
 
 const styles: Record<string, CSSProperties> = {

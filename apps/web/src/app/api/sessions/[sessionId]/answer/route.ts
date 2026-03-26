@@ -1,7 +1,43 @@
 import { NextResponse } from "next/server";
+import {
+  resolvePracticeUserId,
+  submitAnswer,
+} from "../../../../../features/practice/server";
 
-// TODO(api/session-routes): POST — Persist one answer attempt for `sessionId` (body: question id + choice); return updated in-session progress state the client needs. Validate with `SubmitAnswerInputSchema` / `SubmitAnswerResponseSchema`. Server helper: `submitAnswer`.
+type SubmitAnswerInputSchema = {
+  questionId: string;
+  choiceIndex: number;
+};
 
-export async function POST() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+type RouteContext = {
+  params: Promise<{
+    sessionId: string;
+  }>;
+};
+
+export async function POST(request: Request, context: RouteContext) {
+  try {
+    const { sessionId } = await context.params;
+    const body = (await request.json()) as Partial<SubmitAnswerInputSchema>;
+    if (!body.questionId || typeof body.choiceIndex !== "number") {
+      return NextResponse.json(
+        { error: "questionId and numeric choiceIndex are required." },
+        { status: 400 },
+      );
+    }
+
+    const userId = resolvePracticeUserId(request);
+    const response = submitAnswer({
+      userId,
+      sessionId,
+      questionId: body.questionId,
+      choiceIndex: body.choiceIndex,
+    });
+    return NextResponse.json(response, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unable to submit answer." },
+      { status: 400 },
+    );
+  }
 }

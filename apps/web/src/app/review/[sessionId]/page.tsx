@@ -1,32 +1,49 @@
 import Link from "next/link";
-import { getSessionReview } from "../../../features/practice/mock-practice";
-import { getDeterministicRecommendation } from "../../../features/progress/mock-progress";
-
-// TODO(practice-feature): Load review payload from persisted post-submit data for `params.sessionId` (replace `getSessionReview` mock) so explanations and scores match what `submit` stored.
+import {
+  DEFAULT_PRACTICE_USER_ID,
+  getSessionReview,
+} from "../../../features/practice/server";
+import { getProgressOverview } from "../../../features/progress/server";
 
 type ReviewPageProps = {
-  params: {
+  params: Promise<{
     sessionId: string;
-  };
+  }>;
 };
 
-export default function ReviewPage({ params }: ReviewPageProps) {
-  const review = getSessionReview(params.sessionId);
-  const recommendation = getDeterministicRecommendation();
+export default async function ReviewPage({ params }: ReviewPageProps) {
+  const { sessionId } = await params;
+  const review = getSessionReview(sessionId, DEFAULT_PRACTICE_USER_ID);
+  const recommendation = getProgressOverview(
+    DEFAULT_PRACTICE_USER_ID,
+  ).recommendation;
+
+  if (!review) {
+    return (
+      <main style={{ margin: "0 auto", maxWidth: 860, padding: "2rem 1.25rem 3rem" }}>
+        <h1>Session Review</h1>
+        <p>This session has not been submitted yet, so no scored review is available.</p>
+        <p>
+          <Link href={`/practice/session/${sessionId}`}>Return to your session</Link>
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main style={{ margin: "0 auto", maxWidth: 1040, padding: "2rem 1.25rem 3rem" }}>
       <header style={{ marginBottom: "1.25rem" }}>
         <h1 style={{ marginBottom: "0.45rem" }}>Session Review</h1>
         <p style={{ margin: 0 }}>
-          Read-only scoring review for submitted session <strong>{review.sessionId}</strong>. Full explanations are available after submission.
+          Read-only scoring review for submitted session <strong>{review.sessionId}</strong>.
         </p>
       </header>
 
       <section style={summaryPanelStyle}>
         <h2 style={{ marginTop: 0 }}>Score summary</h2>
         <p>
-          {review.scoreSummary.correct}/{review.scoreSummary.total} correct on {review.scoreSummary.submittedAt}.
+          {review.scoreSummary.correct}/{review.scoreSummary.total} correct on{" "}
+          {review.scoreSummary.submittedAt}.
         </p>
 
         <h3>Concept breakdown</h3>
@@ -64,8 +81,10 @@ export default function ReviewPage({ params }: ReviewPageProps) {
         <h2>Recommended next practice</h2>
         <p style={{ marginBottom: "0.45rem" }}>{recommendation.reason}</p>
         <p style={{ margin: 0 }}>
-          <Link href={recommendation.targetRoute}>{recommendation.recommendationTitle}</Link> or return to{" "}
-          <Link href="/dashboard">dashboard</Link>.
+          <Link href={recommendation.targetRoute}>
+            {recommendation.recommendationTitle}
+          </Link>{" "}
+          or return to <Link href="/dashboard">dashboard</Link>.
         </p>
       </section>
     </main>

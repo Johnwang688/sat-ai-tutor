@@ -1,7 +1,33 @@
 import { NextResponse } from "next/server";
+import {
+  generateDrill,
+  resolvePracticeUserId,
+  type SectionSlug,
+} from "../../../../features/practice/server";
 
-// TODO(api/practice): POST — Given concept/section filters, select or generate a drill question list (per product rules), return ids or snapshots for starting a session (may pair with `createSession` or embed creation). Validate request/response schemas per api README naming (`GenerateDrillInputSchema`, etc.).
+type GenerateDrillInputSchema = {
+  conceptSlug?: string;
+  section?: SectionSlug;
+  count?: number;
+  createSession?: boolean;
+};
 
-export async function POST() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as GenerateDrillInputSchema;
+    const userId = resolvePracticeUserId(request);
+    const result = generateDrill({
+      userId,
+      conceptSlug: body.conceptSlug,
+      section: body.section,
+      count: body.count,
+      createSession: body.createSession,
+    });
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unable to generate drill." },
+      { status: 400 },
+    );
+  }
 }

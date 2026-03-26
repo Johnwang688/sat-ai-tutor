@@ -1,27 +1,89 @@
+import { revalidatePath } from "next/cache";
 import type { CSSProperties } from "react";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
-import { questionDrafts } from "../../../features/admin/mock-data";
+import { assertAdminFromServerContext } from "@/features/admin/server/auth";
+import {
+  createQuestionDraft,
+  listVettedQuestions,
+  publishQuestion,
+  updateQuestionDraft,
+} from "@/features/admin/server/store";
 
-// TODO(admin-feature): Full vetted question editor — load/save drafts via `/api/admin/questions`, validate taxonomy + answer schema, publish through `/api/admin/questions/[id]/publish` with audit logging (see api README).
+async function createDraftAction(formData: FormData) {
+  "use server";
+  const actor = await assertAdminFromServerContext();
+  const difficulty = Number(formData.get("difficulty"));
+  if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
+    return;
+  }
+
+  createQuestionDraft(
+    {
+      title: String(formData.get("title") ?? "").trim(),
+      section: String(formData.get("section")) === "reading-writing" ? "reading-writing" : "math",
+      domain: String(formData.get("domain") ?? "").trim(),
+      concept: String(formData.get("concept") ?? "").trim(),
+      difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
+      calculatorAllowed: formData.get("calculatorAllowed") === "on",
+      desmosRelevant: formData.get("desmosRelevant") === "on",
+      answerSchema: String(formData.get("answerSchema") ?? "{}"),
+      explanationJson: String(formData.get("explanationJson") ?? "{}"),
+    },
+    actor,
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/questions");
+}
+
+async function updateDraftAction(formData: FormData) {
+  "use server";
+  const actor = await assertAdminFromServerContext();
+  const questionId = String(formData.get("questionId") ?? "");
+  const difficulty = Number(formData.get("difficulty"));
+  if (!questionId || !Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
+    return;
+  }
+
+  updateQuestionDraft(
+    questionId,
+    {
+      title: String(formData.get("title") ?? ""),
+      difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
+    },
+    actor,
+  );
+
+  revalidatePath("/admin/questions");
+}
+
+async function publishDraftAction(formData: FormData) {
+  "use server";
+  const actor = await assertAdminFromServerContext();
+  const questionId = String(formData.get("questionId") ?? "");
+  if (!questionId) {
+    return;
+  }
+
+  publishQuestion(questionId, actor);
+  revalidatePath("/admin");
+  revalidatePath("/admin/questions");
+}
 
 export default function AdminQuestionsPage() {
+  const questions = listVettedQuestions();
+
   return (
     <AdminShell
       title="Vetted Question Editor"
-      summary="Create and update vetted SAT question records, including taxonomy mapping, answer schema, explanations, and calculator flags."
+      summary="Create and update vetted SAT question records, including taxonomy mapping, answer schema, and publish transitions with audit events."
     >
       <section style={styles.panel}>
-        <h2 style={styles.sectionTitle}>New Question Draft</h2>
-        <form style={styles.formGrid} aria-label="Question editor scaffold">
+        <h2 style={styles.sectionTitle}>Create New Draft</h2>
+        <form style={styles.formGrid} action={createDraftAction}>
           <label style={styles.field}>
             <span style={styles.label}>Question title</span>
-            <input
-              style={styles.input}
-              name="title"
-              placeholder="Ex: Solve an equation with variables on both sides"
-              readOnly
-              value=""
-            />
+            <input style={styles.input} name="title" required />
           </label>
           <label style={styles.field}>
             <span style={styles.label}>Section</span>
@@ -32,56 +94,56 @@ export default function AdminQuestionsPage() {
           </label>
           <label style={styles.field}>
             <span style={styles.label}>Domain</span>
-            <input style={styles.input} name="domain" placeholder="Algebra" readOnly value="" />
+            <input style={styles.input} name="domain" required />
           </label>
           <label style={styles.field}>
             <span style={styles.label}>Concept</span>
-            <input
-              style={styles.input}
-              name="concept"
-              placeholder="Linear equations in one variable"
-              readOnly
-              value=""
-            />
+            <input style={styles.input} name="concept" required />
           </label>
           <label style={styles.field}>
             <span style={styles.label}>Difficulty (1-5)</span>
-            <input style={styles.input} name="difficulty" type="number" min={1} max={5} readOnly value="" />
+            <input
+              style={styles.input}
+              name="difficulty"
+              type="number"
+              min={1}
+              max={5}
+              defaultValue={2}
+              required
+            />
           </label>
           <label style={styles.checkboxField}>
-            <input type="checkbox" checked readOnly />
+            <input type="checkbox" name="calculatorAllowed" defaultChecked />
             <span>Calculator allowed</span>
           </label>
           <label style={styles.checkboxField}>
-            <input type="checkbox" readOnly />
+            <input type="checkbox" name="desmosRelevant" />
             <span>Desmos relevant</span>
           </label>
           <label style={styles.fieldFull}>
             <span style={styles.label}>Answer schema JSON</span>
             <textarea
               style={styles.textArea}
-              name="answer-schema"
-              readOnly
-              value='{"type":"multiple_choice","choices":["A","B","C","D"],"correctIndex":1}'
+              name="answerSchema"
+              defaultValue='{"type":"multiple_choice","choices":["A","B","C","D"],"correctIndex":0}'
             />
           </label>
           <label style={styles.fieldFull}>
             <span style={styles.label}>Explanation JSON</span>
             <textarea
               style={styles.textArea}
-              name="explanation"
-              readOnly
-              value='{"summary":"Isolate x by combining like terms and dividing by coefficient."}'
+              name="explanationJson"
+              defaultValue='{"summary":"Explain the solving strategy and why distractors fail."}'
             />
           </label>
+          <button type="submit" style={styles.primaryButton}>
+            Save Draft
+          </button>
         </form>
-        <p style={styles.note}>
-          This scaffold is intentionally read-only until server APIs and role checks are wired.
-        </p>
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.sectionTitle}>Recent Vetted Question Drafts</h2>
+        <h2 style={styles.sectionTitle}>Vetted Questions</h2>
         <table style={styles.table}>
           <thead>
             <tr>
@@ -92,10 +154,11 @@ export default function AdminQuestionsPage() {
               <th style={styles.headerCell}>Concept</th>
               <th style={styles.headerCell}>Difficulty</th>
               <th style={styles.headerCell}>Updated</th>
+              <th style={styles.headerCell}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {questionDrafts.map((question) => (
+            {questions.map((question) => (
               <tr key={question.id}>
                 <td style={styles.bodyCell}>
                   <code>{question.id}</code>
@@ -106,6 +169,35 @@ export default function AdminQuestionsPage() {
                 <td style={styles.bodyCell}>{question.concept}</td>
                 <td style={styles.bodyCell}>{question.difficulty}</td>
                 <td style={styles.bodyCell}>{question.updatedAt}</td>
+                <td style={styles.bodyCell}>
+                  {question.status === "draft" ? (
+                    <div style={styles.actionStack}>
+                      <form action={updateDraftAction} style={styles.inlineForm}>
+                        <input type="hidden" name="questionId" value={question.id} />
+                        <input style={styles.smallInput} name="title" defaultValue={question.title} />
+                        <input
+                          style={styles.tinyInput}
+                          type="number"
+                          min={1}
+                          max={5}
+                          name="difficulty"
+                          defaultValue={question.difficulty}
+                        />
+                        <button type="submit" style={styles.secondaryButton}>
+                          Update
+                        </button>
+                      </form>
+                      <form action={publishDraftAction}>
+                        <input type="hidden" name="questionId" value={question.id} />
+                        <button type="submit" style={styles.primaryButton}>
+                          Publish
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <span style={styles.publishedBadge}>Published</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -171,12 +263,6 @@ const styles: Record<string, CSSProperties> = {
     color: "#0f172a",
     resize: "vertical",
   },
-  note: {
-    marginTop: "0.8rem",
-    marginBottom: 0,
-    color: "#64748b",
-    fontSize: "0.9rem",
-  },
   table: {
     width: "100%",
     borderCollapse: "collapse",
@@ -193,5 +279,54 @@ const styles: Record<string, CSSProperties> = {
     padding: "0.5rem 0.4rem",
     color: "#1e293b",
     verticalAlign: "top",
+  },
+  actionStack: {
+    display: "grid",
+    gap: "0.35rem",
+  },
+  inlineForm: {
+    display: "flex",
+    gap: "0.25rem",
+    alignItems: "center",
+  },
+  smallInput: {
+    minWidth: "180px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    padding: "0.3rem 0.4rem",
+  },
+  tinyInput: {
+    width: "56px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    padding: "0.3rem 0.4rem",
+  },
+  primaryButton: {
+    border: "1px solid #0f172a",
+    borderRadius: "8px",
+    background: "#0f172a",
+    color: "#ffffff",
+    fontWeight: 600,
+    padding: "0.4rem 0.75rem",
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    border: "1px solid #94a3b8",
+    borderRadius: "8px",
+    background: "#f8fafc",
+    color: "#0f172a",
+    fontWeight: 600,
+    padding: "0.4rem 0.75rem",
+    cursor: "pointer",
+  },
+  publishedBadge: {
+    display: "inline-block",
+    borderRadius: "999px",
+    padding: "0.2rem 0.55rem",
+    border: "1px solid #86efac",
+    background: "#f0fdf4",
+    color: "#166534",
+    fontWeight: 700,
+    fontSize: "0.8rem",
   },
 };

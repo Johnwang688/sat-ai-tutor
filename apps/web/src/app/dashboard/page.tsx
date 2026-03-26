@@ -1,29 +1,28 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
-import {
-  conceptProgress,
-  getDeterministicRecommendation,
-  recentSessions,
-  sectionProgress,
-} from "../../features/progress/mock-progress";
+import { parseAuthSessionFromCookies } from "../../features/auth/server";
+import { DEFAULT_PRACTICE_USER_ID } from "../../features/practice/server";
+import { getProgressOverview } from "../../features/progress/server";
 
-// TODO(progress-feature): Fetch dashboard payload from `GET /api/progress/overview` for the signed-in student only (section rollups, concept snapshot, recent sessions). Replace mock arrays below.
-
-export default function DashboardPage() {
-  const recommendation = getDeterministicRecommendation();
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const session = parseAuthSessionFromCookies(cookieStore);
+  const overview = getProgressOverview(session?.userId ?? DEFAULT_PRACTICE_USER_ID);
+  const recommendation = overview.recommendation;
 
   return (
     <main style={{ margin: "0 auto", maxWidth: 1080, padding: "2rem 1.5rem 3rem" }}>
       <header style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ marginBottom: "0.4rem" }}>Dashboard</h1>
         <p style={{ margin: 0 }}>
-          Deterministic progress view for the authenticated student. Recommendations are rule-based from recent mastery data.
+          Deterministic progress view for the authenticated student. Recommendations stay rule-based from recent mastery data.
         </p>
       </header>
 
       <section style={{ marginBottom: "1.25rem" }}>
         <h2>Section progress</h2>
         <div style={cardGridStyle}>
-          {sectionProgress.map((section) => (
+          {overview.sectionProgress.map((section) => (
             <article key={section.slug} style={cardStyle}>
               <h3 style={{ marginTop: 0 }}>{section.label}</h3>
               <p style={metricTextStyle}>Weighted mastery: {section.weightedMastery}%</p>
@@ -58,17 +57,17 @@ export default function DashboardPage() {
             </tr>
           </thead>
           <tbody>
-            {recentSessions.map((session) => (
-              <tr key={session.id}>
+            {overview.recentSessions.map((recentSession) => (
+              <tr key={recentSession.id}>
                 <td style={tdStyle}>
-                  <Link href={`/review/${session.id}`}>{session.id}</Link>
+                  <Link href={`/review/${recentSession.id}`}>{recentSession.id}</Link>
                 </td>
-                <td style={tdStyle}>{session.type}</td>
-                <td style={tdStyle}>{session.section}</td>
+                <td style={tdStyle}>{recentSession.type}</td>
+                <td style={tdStyle}>{recentSession.section}</td>
                 <td style={tdStyle}>
-                  {session.correct}/{session.total}
+                  {recentSession.correct}/{recentSession.total}
                 </td>
-                <td style={tdStyle}>{session.completedAt}</td>
+                <td style={tdStyle}>{recentSession.completedAt}</td>
               </tr>
             ))}
           </tbody>
@@ -78,7 +77,7 @@ export default function DashboardPage() {
       <section>
         <h2>Concept focus snapshot</h2>
         <ul style={listStyle}>
-          {conceptProgress.map((concept) => (
+          {overview.conceptProgress.map((concept) => (
             <li key={concept.slug}>
               <Link href={`/concepts/${concept.slug}`}>{concept.name}</Link>: {concept.masteryPercent}% mastery,{" "}
               {concept.recentAccuracyPercent}% recent accuracy

@@ -1,21 +1,23 @@
 import type { CSSProperties } from "react";
 import {
-  AdminActionLink,
   AdminMetricCard,
   AdminShell,
+  AdminActionLink,
+  QuestionWorkflowLink,
+  VariantWorkflowLink,
 } from "../../features/admin/components/admin-shell";
-import { adminSummaryMetrics } from "../../features/admin/mock-data";
-
-// TODO(admin-feature): Back overview metrics with real counts from DB; ensure entry to this area is already gated by admin role (middleware + server checks).
+import { getAdminDashboardSummary } from "@/features/admin/server/store";
 
 export default function AdminPage() {
+  const { metrics, auditEvents } = getAdminDashboardSummary();
+
   return (
     <AdminShell
       title="Admin Home"
       summary="Manage vetted SAT content, review generated variants, and keep the section/domain/concept/subskill taxonomy clean."
     >
       <section style={styles.metricGrid} aria-label="Admin overview metrics">
-        {adminSummaryMetrics.map((metric) => (
+        {metrics.map((metric) => (
           <AdminMetricCard
             key={metric.label}
             label={metric.label}
@@ -26,12 +28,12 @@ export default function AdminPage() {
       </section>
 
       <section style={styles.linksGrid} aria-label="Admin route links">
-        <AdminActionLink
+        <QuestionWorkflowLink
           href="/admin/questions"
           title="Vetted Question Editor"
           summary="Create and update draft question_bank content with explicit taxonomy links and answer schemas."
         />
-        <AdminActionLink
+        <VariantWorkflowLink
           href="/admin/review-queue"
           title="Generated Variant Review Queue"
           summary="Approve or reject generated variants with validation context before they reach production workflows."
@@ -43,13 +45,20 @@ export default function AdminPage() {
         />
       </section>
 
-      <section style={styles.auditNotice}>
-        <h2 style={styles.sectionTitle}>Access and Audit Notes</h2>
-        <ul style={styles.list}>
-          <li>Use server-side admin role checks before rendering privileged data.</li>
-          <li>Write audit events for publish, approve, and reject actions.</li>
-          <li>Keep generated variants separate from vetted question records.</li>
-        </ul>
+      <section style={styles.auditPanel}>
+        <h2 style={styles.sectionTitle}>Recent Admin Audit Events</h2>
+        {auditEvents.length === 0 ? (
+          <p style={styles.emptyText}>No publish/review/taxonomy events yet.</p>
+        ) : (
+          <ul style={styles.list}>
+            {auditEvents.map((event) => (
+              <li key={event.id}>
+                <code>{event.action}</code> on <code>{event.entityId}</code> by{" "}
+                <code>{event.actorId}</code> at {event.createdAt}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </AdminShell>
   );
@@ -68,7 +77,7 @@ const styles: Record<string, CSSProperties> = {
     gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
     marginBottom: "1.1rem",
   },
-  auditNotice: {
+  auditPanel: {
     border: "1px solid #dbe7ef",
     borderRadius: "12px",
     padding: "1rem",
@@ -78,6 +87,10 @@ const styles: Record<string, CSSProperties> = {
     marginTop: 0,
     marginBottom: "0.6rem",
     fontSize: "1rem",
+  },
+  emptyText: {
+    margin: 0,
+    color: "#64748b",
   },
   list: {
     margin: 0,

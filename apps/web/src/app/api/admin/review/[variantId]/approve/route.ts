@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
+import { assertAdminFromRequest } from "@/features/admin/server/auth";
+import { jsonError, withAdminRouteErrors } from "@/features/admin/server/http";
+import { approveVariant } from "@/features/admin/server/store";
 
-// TODO(admin-routes): Enforce admin role first.
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ variantId: string }> },
+) {
+  return withAdminRouteErrors(async () => {
+    const actor = assertAdminFromRequest(request);
+    const { variantId } = await context.params;
+    const variant = approveVariant(variantId, actor);
 
-// TODO(api/admin-review): POST — Approve `variantId` for downstream use; validate state transitions.
+    if (!variant) {
+      return jsonError("Variant not found or not pending.", 404);
+    }
 
-// TODO(admin-routes): Write an audit row for approve (actor, variant id, timestamp, metadata).
-
-export async function POST() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+    return NextResponse.json({ variant });
+  });
 }

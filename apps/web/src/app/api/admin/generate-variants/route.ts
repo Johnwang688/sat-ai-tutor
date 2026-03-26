@@ -1,9 +1,37 @@
 import { NextResponse } from "next/server";
+import { assertAdminFromRequest } from "@/features/admin/server/auth";
+import { jsonError, withAdminRouteErrors } from "@/features/admin/server/http";
+import { generateVariants } from "@/features/admin/server/store";
 
-// TODO(admin-routes): Enforce admin role first.
+export async function POST(request: Request) {
+  return withAdminRouteErrors(async () => {
+    const actor = assertAdminFromRequest(request);
+    const body = (await request.json()) as Record<string, unknown>;
 
-// TODO(api/admin-variants): POST — Generated-variant pipeline only: enqueue or run variant generation from a parent vetted question; do not reuse vetted-question editor handlers. Separate code paths from `/api/admin/questions/*` per api README.
+    const parentQuestionId =
+      typeof body.parentQuestionId === "string" ? body.parentQuestionId.trim() : "";
+    if (!parentQuestionId) {
+      return jsonError("parentQuestionId is required.", 400);
+    }
 
-export async function POST() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+    const parsedCount =
+      body.count === undefined || body.count === null ? undefined : Number(body.count);
+    if (
+      parsedCount !== undefined &&
+      (!Number.isInteger(parsedCount) || parsedCount < 1 || parsedCount > 5)
+    ) {
+      return jsonError("count must be an integer between 1 and 5.", 400);
+    }
+
+    const variants = generateVariants(
+      {
+        parentQuestionId,
+        concept: typeof body.concept === "string" ? body.concept : undefined,
+        count: parsedCount ?? undefined,
+      },
+      actor,
+    );
+
+    return NextResponse.json({ variants }, { status: 201 });
+  });
 }

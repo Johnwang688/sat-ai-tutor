@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
+import {
+  resolvePracticeUserId,
+} from "../../../../features/practice/server";
+import { getProgressOverview } from "../../../../features/progress/server";
 
-// TODO(api/progress-route): GET — Return dashboard-ready JSON for the signed-in student only (section rollups, concept snapshot, recent sessions, optional recommendation inputs). Validate output with `ProgressOverviewResponseSchema`. Never leak another user's data.
+type ProgressOverviewResponseSchema = ReturnType<typeof getProgressOverview>;
 
-export async function GET() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+export async function GET(request: Request) {
+  try {
+    const userId = resolvePracticeUserId(request);
+    const payload: ProgressOverviewResponseSchema = getProgressOverview(userId);
+    return NextResponse.json(payload, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unable to load overview." },
+      { status: 400 },
+    );
+  }
 }

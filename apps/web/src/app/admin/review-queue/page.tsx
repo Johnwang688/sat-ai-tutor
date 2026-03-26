@@ -1,15 +1,89 @@
+import { revalidatePath } from "next/cache";
 import type { CSSProperties } from "react";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
-import { variantReviewItems } from "../../../features/admin/mock-data";
+import { assertAdminFromServerContext } from "@/features/admin/server/auth";
+import {
+  approveVariant,
+  generateVariants,
+  listGeneratedVariants,
+  rejectVariant,
+} from "@/features/admin/server/store";
 
-// TODO(admin-feature): Drive queue from `/api/admin/generate-variants` output + DB state; wire Approve/Reject to `/api/admin/review/[variantId]/approve` and `.../reject` with audit events. Keep this flow separate from vetted `Question*` editor routes.
+async function generateVariantsAction(formData: FormData) {
+  "use server";
+  const actor = await assertAdminFromServerContext();
+  const parentQuestionId = String(formData.get("parentQuestionId") ?? "").trim();
+  const concept = String(formData.get("concept") ?? "").trim();
+  const count = Number(formData.get("count"));
+  if (!parentQuestionId || !Number.isInteger(count) || count < 1 || count > 5) {
+    return;
+  }
+  generateVariants({ parentQuestionId, concept, count }, actor);
+  revalidatePath("/admin");
+  revalidatePath("/admin/review-queue");
+}
+
+async function approveVariantAction(formData: FormData) {
+  "use server";
+  const actor = await assertAdminFromServerContext();
+  const variantId = String(formData.get("variantId") ?? "").trim();
+  if (!variantId) {
+    return;
+  }
+  approveVariant(variantId, actor);
+  revalidatePath("/admin");
+  revalidatePath("/admin/review-queue");
+}
+
+async function rejectVariantAction(formData: FormData) {
+  "use server";
+  const actor = await assertAdminFromServerContext();
+  const variantId = String(formData.get("variantId") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!variantId || !reason) {
+    return;
+  }
+  rejectVariant(variantId, reason, actor);
+  revalidatePath("/admin");
+  revalidatePath("/admin/review-queue");
+}
 
 export default function AdminReviewQueuePage() {
+  const pendingVariants = listGeneratedVariants("pending");
+  const reviewedVariants = listGeneratedVariants().filter(
+    (variant) => variant.status !== "pending",
+  );
+
   return (
     <AdminShell
       title="Generated Variant Review Queue"
       summary="Review generated variants with validation context and explicit approve/reject decisions before publication workflows."
     >
+      <section style={styles.panel}>
+        <h2 style={styles.sectionTitle}>Generate New Variants</h2>
+        <form action={generateVariantsAction} style={styles.generateForm}>
+          <input
+            style={styles.input}
+            name="parentQuestionId"
+            placeholder="Parent vetted question id (e.g. q_1023)"
+            required
+          />
+          <input style={styles.input} name="concept" placeholder="Concept override (optional)" />
+          <input
+            style={styles.smallInput}
+            name="count"
+            type="number"
+            min={1}
+            max={5}
+            defaultValue={2}
+            required
+          />
+          <button type="submit" style={styles.primaryButton}>
+            Generate
+          </button>
+        </form>
+      </section>
+
       <section style={styles.panel}>
         <h2 style={styles.sectionTitle}>Pending Variants</h2>
         <table style={styles.table}>
@@ -25,7 +99,7 @@ export default function AdminReviewQueuePage() {
             </tr>
           </thead>
           <tbody>
-            {variantReviewItems.map((item) => (
+            {pendingVariants.map((item) => (
               <tr key={item.id}>
                 <td style={styles.bodyCell}>
                   <code>{item.id}</code>
@@ -41,12 +115,24 @@ export default function AdminReviewQueuePage() {
                 <td style={styles.bodyCell}>{item.generatedAt}</td>
                 <td style={styles.bodyCell}>
                   <div style={styles.actionRow}>
-                    <button type="button" style={styles.approveButton}>
-                      Approve
-                    </button>
-                    <button type="button" style={styles.rejectButton}>
-                      Reject
-                    </button>
+                    <form action={approveVariantAction}>
+                      <input type="hidden" name="variantId" value={item.id} />
+                      <button type="submit" style={styles.approveButton}>
+                        Approve
+                      </button>
+                    </form>
+                    <form action={rejectVariantAction} style={styles.rejectForm}>
+                      <input type="hidden" name="variantId" value={item.id} />
+                      <input
+                        name="reason"
+                        style={styles.rejectInput}
+                        placeholder="Reject reason"
+                        required
+                      />
+                      <button type="submit" style={styles.rejectButton}>
+                        Reject
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>
@@ -56,17 +142,19 @@ export default function AdminReviewQueuePage() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.sectionTitle}>Selected Variant Notes</h2>
-        <ul style={styles.list}>
-          {variantReviewItems.map((item) => (
-            <li key={`${item.id}-note`}>
-              <strong>{item.id}:</strong> {item.notes}
-            </li>
-          ))}
-        </ul>
-        <p style={styles.note}>
-          Approve/reject buttons are UI scaffolding only until admin APIs and audit event writes are wired.
-        </p>
+        <h2 style={styles.sectionTitle}>Reviewed Variants</h2>
+        {reviewedVariants.length === 0 ? (
+          <p style={styles.note}>No reviewed variants yet.</p>
+        ) : (
+          <ul style={styles.list}>
+            {reviewedVariants.map((variant) => (
+              <li key={variant.id}>
+                <code>{variant.id}</code> {variant.status}
+                {variant.rejectionReason ? `: ${variant.rejectionReason}` : ""} ({variant.reviewedAt})
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </AdminShell>
   );
@@ -96,6 +184,24 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: "0.7rem",
     fontSize: "1rem",
   },
+  generateForm: {
+    display: "flex",
+    gap: "0.5rem",
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  input: {
+    minWidth: "240px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    padding: "0.45rem 0.55rem",
+  },
+  smallInput: {
+    width: "72px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    padding: "0.45rem 0.55rem",
+  },
   table: {
     width: "100%",
     borderCollapse: "collapse",
@@ -114,9 +220,27 @@ const styles: Record<string, CSSProperties> = {
     verticalAlign: "top",
   },
   actionRow: {
-    display: "flex",
-    flexWrap: "wrap",
+    display: "grid",
     gap: "0.45rem",
+  },
+  rejectForm: {
+    display: "flex",
+    gap: "0.35rem",
+    alignItems: "center",
+  },
+  rejectInput: {
+    border: "1px solid #fca5a5",
+    borderRadius: "8px",
+    padding: "0.3rem 0.5rem",
+    minWidth: "180px",
+  },
+  primaryButton: {
+    border: "1px solid #0f172a",
+    color: "#ffffff",
+    background: "#0f172a",
+    borderRadius: "8px",
+    padding: "0.4rem 0.75rem",
+    fontWeight: 600,
   },
   approveButton: {
     border: "1px solid #059669",
@@ -174,8 +298,7 @@ const styles: Record<string, CSSProperties> = {
     gap: "0.35rem",
   },
   note: {
-    marginTop: "0.8rem",
-    marginBottom: 0,
+    margin: 0,
     color: "#64748b",
     fontSize: "0.9rem",
   },

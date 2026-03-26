@@ -1,15 +1,44 @@
-import Link from "next/link";
-import { practiceModes } from "../../features/practice/mock-practice";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { parseAuthSessionFromCookies } from "../../features/auth/server";
+import { conceptOptions, practiceModes } from "../../features/practice/mock-practice";
+import {
+  createSession,
+  DEFAULT_PRACTICE_USER_ID,
+  type SectionSlug,
+  type SessionTypeSlug,
+} from "../../features/practice/server";
 
-// TODO(auth-feature): This page must stay free of login/signup UI; auth is only `/login` and `/signup` so student practice stays visually separate.
+function asSessionType(value: FormDataEntryValue | null): SessionTypeSlug {
+  if (
+    value === "concept-drill" ||
+    value === "mini-quiz" ||
+    value === "full-module"
+  ) {
+    return value;
+  }
 
-// TODO(practice-feature): On "start", call `POST /api/sessions/create` with session type, section, and concept filter; redirect to `/practice/session/[sessionId]` with the returned snapshot (replace the demo link). Shared launch UI should live under `Practice*` components in `features/practice`.
+  return "concept-drill";
+}
 
-const conceptOptions = [
-  { slug: "linear-equations", label: "Linear Equations in One Variable" },
-  { slug: "transitions", label: "Transitions" },
-  { slug: "punctuation", label: "Punctuation" },
-] as const;
+function asSection(value: FormDataEntryValue | null): SectionSlug {
+  return value === "reading-writing" ? "reading-writing" : "math";
+}
+
+async function startPracticeAction(formData: FormData) {
+  "use server";
+
+  const cookieStore = await cookies();
+  const session = parseAuthSessionFromCookies(cookieStore);
+  const created = createSession({
+    userId: session?.userId ?? DEFAULT_PRACTICE_USER_ID,
+    sessionType: asSessionType(formData.get("sessionType")),
+    section: asSection(formData.get("section")),
+    conceptSlug: String(formData.get("concept") ?? "").trim() || undefined,
+  });
+
+  redirect(`/practice/session/${created.sessionId}`);
+}
 
 export default function PracticePage() {
   return (
@@ -17,7 +46,7 @@ export default function PracticePage() {
       <header style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ marginBottom: "0.4rem" }}>Practice Launcher</h1>
         <p style={{ margin: 0 }}>
-          Configure a V1 practice session, then call `POST /api/sessions/create` to start and redirect into `/practice/session/[sessionId]`.
+          Configure a V1 practice session, start it immediately, and stay inside the student practice flow.
         </p>
       </header>
 
@@ -29,6 +58,7 @@ export default function PracticePage() {
               <h3 style={{ marginTop: 0 }}>{mode.title}</h3>
               <p style={{ marginTop: 0 }}>{mode.description}</p>
               <p style={smallTextStyle}>Question count: {mode.questionCount}</p>
+              <p style={smallTextStyle}>Time budget: {Math.floor(mode.durationSeconds / 60)} minutes</p>
               <p style={smallTextStyle}>
                 Scored source: {mode.usesVerifiedQuestionsOnly ? "Verified question bank only" : "Mixed source"}
               </p>
@@ -39,17 +69,17 @@ export default function PracticePage() {
 
       <section style={formPanelStyle}>
         <h2 style={{ marginTop: 0 }}>Session setup</h2>
-        <form>
+        <form action={startPracticeAction}>
           <fieldset style={fieldSetStyle}>
             <legend style={legendStyle}>Session type</legend>
             <label style={optionStyle}>
-              <input type="radio" name="sessionType" defaultChecked /> Concept Drill
+              <input type="radio" name="sessionType" value="concept-drill" defaultChecked /> Concept Drill
             </label>
             <label style={optionStyle}>
-              <input type="radio" name="sessionType" /> Mini Quiz
+              <input type="radio" name="sessionType" value="mini-quiz" /> Mini Quiz
             </label>
             <label style={optionStyle}>
-              <input type="radio" name="sessionType" /> Full Module
+              <input type="radio" name="sessionType" value="full-module" /> Full Module
             </label>
           </fieldset>
 
@@ -71,14 +101,16 @@ export default function PracticePage() {
               </option>
             ))}
           </select>
-        </form>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1rem" }}>
-          <Link href="/practice/session/sess-demo-linear" style={startButtonStyle}>
-            Start demo session
-          </Link>
-          <p style={{ margin: "0.4rem 0 0" }}>Server create endpoint wiring can replace this demo link without changing UI structure.</p>
-        </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1rem" }}>
+            <button type="submit" style={startButtonStyle}>
+              Start session
+            </button>
+            <p style={{ margin: "0.4rem 0 0" }}>
+              Login and signup remain separate routes so this page stays focused on practice only.
+            </p>
+          </div>
+        </form>
       </section>
     </main>
   );
@@ -142,7 +174,7 @@ const startButtonStyle = {
   backgroundColor: "#0f172a",
   color: "#ffffff",
   borderRadius: 8,
+  border: "none",
   padding: "0.6rem 0.85rem",
-  textDecoration: "none",
   fontWeight: 600,
 } as const;

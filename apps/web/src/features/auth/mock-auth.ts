@@ -1,5 +1,3 @@
-// TODO(auth-feature): Replace this mock copy source with real auth — add `features/auth/server` helpers with verb-first names (`signInWithPassword`, `createProfileRow`, etc.) and shared `Auth*` UI components used only on `/login` and `/signup` (see features/README.md).
-
 export const authHighlights = [
   "Email/password sign in for students and admins",
   "Server-side role-based redirect after successful authentication",
@@ -32,3 +30,4 @@ export const authFlowNotes = [
   "Admins route to /admin after login.",
   "Magic link can be added as a secondary path without blocking V1.",
 ] as const;
+
