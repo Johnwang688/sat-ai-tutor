@@ -1,0 +1,38 @@
+{
+  "id": "q_example_001",
+  "sectionSlug": "reading-writing",
+  "sectionName": "Reading and Writing",
+  "domainSlug": "information-and-ideas",
+  "domainName": "Information and Ideas",
+  "conceptSlug": "central-ideas-and-details",
+  "conceptName": "Central Ideas and Details",
+  "difficulty": 3,
+  "questionType": "multiple_choice",
+  "calculatorAllowed": false,
+  "desmosRelevant": false,
+  "sourceType": "generated_dynamic",
+  "status": "draft",
+  "tags": ["example", "replace-with-real-content"],
+  "promptJson": {
+    "stem": "Which choice best states the main idea of the passage?",
+    "passage": "The Arctic tern migrates farther than almost any other bird. Each year it travels from polar breeding grounds to feeding areas and back, following daylight and food. Scientists track these routes to understand how climate shifts affect migration timing."
+  },
+  "answerSchemaJson": {
+    "type": "multiple_choice",
+    "choices": [
+      "The passage primarily argues that migration is random.",
+      "The passage is mainly about how scientists study long-distance bird migration and what motivates it.",
+      "The passage proves that the Arctic tern is the largest seabird.",
+      "The passage suggests that polar breeding grounds are disappearing."
+    ],
+    "correctIndex": 1
+  },
+  "explanationJson": {
+    "summary": "The passage centers on the tern's extreme migration and scientific interest in how environmental change relates to migration.",
+    "whyCorrect": "Only the second choice captures the passage's focus on migration distance and research; the others introduce claims the passage does not make.",
+    "steps": [
+      "Identify what repeats across sentences (migration, distance, research).",
+      "Eliminate choices that add unsupported superlatives or unrelated topics."
+    ]
+  }
+}

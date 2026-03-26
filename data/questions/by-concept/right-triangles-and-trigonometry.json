@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "geometry-and-trigonometry",
+    "domainName": "Geometry and Trigonometry",
+    "conceptSlug": "right-triangles-and-trigonometry",
+    "conceptName": "Right triangles and trigonometry"
+  },
+  "questions": []
+}

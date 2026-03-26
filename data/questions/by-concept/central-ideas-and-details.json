@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "reading-writing",
+    "sectionName": "Reading and Writing",
+    "domainSlug": "information-and-ideas",
+    "domainName": "Information and Ideas",
+    "conceptSlug": "central-ideas-and-details",
+    "conceptName": "Central Ideas and Details"
+  },
+  "questions": []
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "problem-solving-and-data-analysis",
+    "domainName": "Problem-Solving and Data Analysis",
+    "conceptSlug": "one-variable-data-distributions-and-measures-of-center-and-spread",
+    "conceptName": "One-variable data: distributions and measures of center and spread"
+  },
+  "questions": []
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "problem-solving-and-data-analysis",
+    "domainName": "Problem-Solving and Data Analysis",
+    "conceptSlug": "inference-from-sample-statistics-and-margin-of-error",
+    "conceptName": "Inference from sample statistics and margin of error"
+  },
+  "questions": []
+}

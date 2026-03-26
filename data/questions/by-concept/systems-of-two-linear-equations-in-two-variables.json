@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "algebra",
+    "domainName": "Algebra",
+    "conceptSlug": "systems-of-two-linear-equations-in-two-variables",
+    "conceptName": "Systems of two linear equations in two variables"
+  },
+  "questions": []
+}

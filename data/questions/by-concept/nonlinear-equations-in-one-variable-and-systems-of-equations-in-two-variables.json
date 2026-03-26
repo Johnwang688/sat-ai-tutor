@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "advanced-math",
+    "domainName": "Advanced Math",
+    "conceptSlug": "nonlinear-equations-in-one-variable-and-systems-of-equations-in-two-variables",
+    "conceptName": "Nonlinear equations in one variable and systems of equations in two variables"
+  },
+  "questions": []
+}

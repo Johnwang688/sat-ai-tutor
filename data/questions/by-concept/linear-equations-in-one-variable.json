@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "algebra",
+    "domainName": "Algebra",
+    "conceptSlug": "linear-equations-in-one-variable",
+    "conceptName": "Linear equations in one variable"
+  },
+  "questions": []
+}

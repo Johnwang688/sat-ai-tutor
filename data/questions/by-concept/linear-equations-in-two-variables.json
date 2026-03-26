@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "algebra",
+    "domainName": "Algebra",
+    "conceptSlug": "linear-equations-in-two-variables",
+    "conceptName": "Linear equations in two variables"
+  },
+  "questions": []
+}

@@ -1,0 +1,29 @@
+{
+  "id": "q_rw_transitions_001",
+  "difficulty": 2,
+  "questionType": "multiple_choice",
+  "calculatorAllowed": false,
+  "desmosRelevant": false,
+  "sourceType": "verified",
+  "status": "draft",
+  "tags": [],
+  "promptJson": {
+    "stem": "Which choice completes the text with the most logical transition?",
+    "passage": "The team finished the prototype ahead of schedule. ____ they began user testing the following week."
+  },
+  "answerSchemaJson": {
+    "type": "multiple_choice",
+    "choices": [
+      "Specifically,",
+      "Similarly,",
+      "Therefore,",
+      "By contrast,"
+    ],
+    "correctIndex": 2
+  },
+  "explanationJson": {
+    "summary": "The second sentence gives a result of finishing early, so a cause-effect or result transition fits.",
+    "whyCorrect": "Therefore signals that user testing follows as a consequence of the timeline described.",
+    "steps": ["Link sentence 1 to sentence 2 as consequence, not contrast or similarity."]
+  }
+}

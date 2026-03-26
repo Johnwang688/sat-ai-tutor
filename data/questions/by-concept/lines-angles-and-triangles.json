@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "geometry-and-trigonometry",
+    "domainName": "Geometry and Trigonometry",
+    "conceptSlug": "lines-angles-and-triangles",
+    "conceptName": "Lines, angles, and triangles"
+  },
+  "questions": []
+}

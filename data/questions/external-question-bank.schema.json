@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sat-prep-app.local/schemas/external-question-bank.schema.json",
+  "title": "SAT Prep external question bank",
+  "description": "Matches apps/web/src/features/question-bank/index.ts RawQuestion after normalization. Use full standalone questions when sharing across files; use compact items inside by-concept files (taxonomy on the file root).",
+  "oneOf": [
+    { "$ref": "#/$defs/conceptQuestionBankFile" },
+    { "$ref": "#/$defs/standaloneQuestion" }
+  ],
+  "$defs": {
+    "sectionSlug": {
+      "type": "string",
+      "enum": ["reading-writing", "math"]
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": ["verified", "generated_dynamic"]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "generated_pending_review",
+        "reviewed",
+        "published"
+      ]
+    },
+    "taxonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sectionSlug",
+        "sectionName",
+        "domainSlug",
+        "domainName",
+        "conceptSlug",
+        "conceptName"
+      ],
+      "properties": {
+        "sectionSlug": { "$ref": "#/$defs/sectionSlug" },
+        "sectionName": {
+          "type": "string",
+          "enum": ["Reading and Writing", "Math"]
+        },
+        "domainSlug": { "type": "string", "minLength": 1 },
+        "domainName": { "type": "string", "minLength": 1 },
+        "conceptSlug": { "type": "string", "minLength": 1 },
+        "conceptName": { "type": "string", "minLength": 1 }
+      }
+    },
+    "promptJson": {
+      "type": "object",
+      "description": "Rendered fields: stem (required for display), optional passage, notes, table, claim, context, stimulus, data. Unknown keys are folded into prompt text by the loader.",
+      "properties": {
+        "stem": { "type": "string" },
+        "passage": { "type": "string" },
+        "body": { "type": "string" },
+        "claim": { "type": "string" },
+        "context": { "type": "string" },
+        "stimulus": { "type": "string" },
+        "data": {},
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "table": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "columns": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "answerSchemaJson": {
+      "type": "object",
+      "required": ["choices", "correctIndex"],
+      "properties": {
+        "type": { "type": "string", "const": "multiple_choice" },
+        "choices": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "object", "properties": { "text": { "type": "string" } } }
+            ]
+          }
+        },
+        "correctIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      },
+      "additionalProperties": false
+    },
+    "explanationJson": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string" },
+        "whyCorrect": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "standaloneQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sectionSlug",
+        "sectionName",
+        "domainSlug",
+        "domainName",
+        "conceptSlug",
+        "conceptName",
+        "difficulty",
+        "questionType",
+        "calculatorAllowed",
+        "desmosRelevant",
+        "sourceType",
+        "status",
+        "promptJson",
+        "answerSchemaJson",
+        "explanationJson"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Unique within the merged bank (e.g. q_rw_central_ideas_001)."
+        },
+        "sectionSlug": { "$ref": "#/$defs/sectionSlug" },
+        "sectionName": {
+          "type": "string",
+          "enum": ["Reading and Writing", "Math"]
+        },
+        "domainSlug": { "type": "string" },
+        "domainName": { "type": "string" },
+        "conceptSlug": { "type": "string" },
+        "conceptName": { "type": "string" },
+        "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "questionType": {
+          "type": "string",
+          "description": "e.g. multiple_choice, student_produced_response"
+        },
+        "calculatorAllowed": { "type": "boolean" },
+        "desmosRelevant": { "type": "boolean" },
+        "sourceType": { "$ref": "#/$defs/sourceType" },
+        "status": { "$ref": "#/$defs/status" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "promptJson": { "$ref": "#/$defs/promptJson" },
+        "answerSchemaJson": { "$ref": "#/$defs/answerSchemaJson" },
+        "explanationJson": { "$ref": "#/$defs/explanationJson" }
+      }
+    },
+    "compactQuestion": {
+      "type": "object",
+      "description": "Used inside by-concept files; taxonomy comes from the parent file.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "difficulty",
+        "questionType",
+        "calculatorAllowed",
+        "desmosRelevant",
+        "sourceType",
+        "status",
+        "promptJson",
+        "answerSchemaJson",
+        "explanationJson"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]+$" },
+        "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "questionType": { "type": "string" },
+        "calculatorAllowed": { "type": "boolean" },
+        "desmosRelevant": { "type": "boolean" },
+        "sourceType": { "$ref": "#/$defs/sourceType" },
+        "status": { "$ref": "#/$defs/status" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "promptJson": { "$ref": "#/$defs/promptJson" },
+        "answerSchemaJson": { "$ref": "#/$defs/answerSchemaJson" },
+        "explanationJson": { "$ref": "#/$defs/explanationJson" }
+      }
+    },
+    "conceptQuestionBankFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "taxonomy", "questions"],
+      "properties": {
+        "schemaVersion": { "type": "string", "const": "1" },
+        "taxonomy": { "$ref": "#/$defs/taxonomy" },
+        "questions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/compactQuestion" }
+        }
+      }
+    }
+  }
+}

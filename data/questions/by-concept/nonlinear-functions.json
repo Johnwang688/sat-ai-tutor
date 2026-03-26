@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "advanced-math",
+    "domainName": "Advanced Math",
+    "conceptSlug": "nonlinear-functions",
+    "conceptName": "Nonlinear functions"
+  },
+  "questions": []
+}

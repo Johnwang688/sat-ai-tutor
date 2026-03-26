@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "reading-writing",
+    "sectionName": "Reading and Writing",
+    "domainSlug": "expression-of-ideas",
+    "domainName": "Expression of Ideas",
+    "conceptSlug": "transitions",
+    "conceptName": "Transitions"
+  },
+  "questions": []
+}

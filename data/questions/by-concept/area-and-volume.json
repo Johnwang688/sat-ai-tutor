@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "geometry-and-trigonometry",
+    "domainName": "Geometry and Trigonometry",
+    "conceptSlug": "area-and-volume",
+    "conceptName": "Area and volume"
+  },
+  "questions": []
+}

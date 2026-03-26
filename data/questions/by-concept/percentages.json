@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "taxonomy": {
+    "sectionSlug": "math",
+    "sectionName": "Math",
+    "domainSlug": "problem-solving-and-data-analysis",
+    "domainName": "Problem-Solving and Data Analysis",
+    "conceptSlug": "percentages",
+    "conceptName": "Percentages"
+  },
+  "questions": []
+}
