@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Production / build
+build/
+dist/
+*.tsbuildinfo
+
+# Env (keep .env.example committed)
+.env
+.env.*
+!.env.example
+
+# Logs and debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Testing
+coverage/
+.nyc_output/
+
+# Vercel
+.vercel
+
+# Turbo (if added later)
+.turbo
+
+# Supabase CLI local state (if used)
+.branches
+.temp
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor
+.idea/
+*.swp
+*.swo
+*~
+
+# Optional: local Cursor/VSCode user settings (uncomment if you prefer not to commit)
+# .vscode/
+# .cursor/
