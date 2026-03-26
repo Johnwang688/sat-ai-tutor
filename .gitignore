@@ -50,3 +50,10 @@ Desktop.ini
 # Optional: local Cursor/VSCode user settings (uncomment if you prefer not to commit)
 # .vscode/
 # .cursor/
+
+requirements/todos.md
+requirements/engineering-design-document.md
+
+requirements/*.md
+
+.requirements/
