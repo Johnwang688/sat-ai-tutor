@@ -1,0 +1,25 @@
+-- SAT AI Tutor V1 schema sketch
+--
+-- TODO(db-schema-foundation):
+-- Implement the first real migration in this file.
+--
+-- Scope:
+-- - Create taxonomy tables: sections, domains, concepts, subskills.
+-- - Create question tables: question_bank, question_variants, question_flags.
+-- - Create user/progress tables: profiles, practice_sessions,
+--   practice_session_questions, session_answers, mastery_scores,
+--   tutor_conversations.
+-- - Create admin/audit tables: generation_jobs, audit_events.
+-- - Add foreign keys, created_at/updated_at timestamps, and RLS policies for
+--   user-owned data.
+--
+-- Naming:
+-- - Use plural snake_case table names.
+-- - Use `id` for primary keys and `<table>_id` for foreign keys.
+-- - Suffix JSON columns with `_json`.
+-- - Suffix timestamp columns with `_at`.
+--
+-- Notes:
+-- - Scored module content must come from vetted question tables only.
+-- - Tutor logs should store request/response payloads for auditing.
+-- - Keep V1 simple; do not add score prediction tables yet.
