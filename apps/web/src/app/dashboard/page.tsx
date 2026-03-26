@@ -6,6 +6,8 @@ import {
   sectionProgress,
 } from "../../features/progress/mock-progress";
 
+// TODO(progress-feature): Fetch dashboard payload from `GET /api/progress/overview` for the signed-in student only (section rollups, concept snapshot, recent sessions). Replace mock arrays below.
+
 export default function DashboardPage() {
   const recommendation = getDeterministicRecommendation();
 

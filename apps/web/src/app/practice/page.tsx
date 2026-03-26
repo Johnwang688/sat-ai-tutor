@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { practiceModes } from "../../features/practice/mock-practice";
 
+// TODO(auth-feature): This page must stay free of login/signup UI; auth is only `/login` and `/signup` so student practice stays visually separate.
+
+// TODO(practice-feature): On "start", call `POST /api/sessions/create` with session type, section, and concept filter; redirect to `/practice/session/[sessionId]` with the returned snapshot (replace the demo link). Shared launch UI should live under `Practice*` components in `features/practice`.
+
 const conceptOptions = [
   { slug: "linear-equations", label: "Linear Equations in One Variable" },
   { slug: "transitions", label: "Transitions" },

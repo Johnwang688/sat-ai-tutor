@@ -1,3 +1,5 @@
+// TODO(progress-feature): Implement real mastery rollups and dashboard queries against Supabase (or RPCs); keep next-step logic rule-based for V1. Reusable widgets = `Progress*`; this route-specific layout = `Dashboard*` only.
+
 export type SectionProgress = {
   slug: "reading-writing" | "math";
   label: string;
@@ -122,6 +124,8 @@ export const recentSessions: ReadonlyArray<RecentSession> = [
     completedAt: "2026-03-22",
   },
 ];
+
+// TODO(progress-feature): When wiring real data, keep recommendation deterministic/rule-based (e.g. lowest mastery / recent accuracy), not model-generated.
 
 export function getDeterministicRecommendation(): {
   conceptSlug: string;

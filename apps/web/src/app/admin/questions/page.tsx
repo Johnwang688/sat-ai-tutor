@@ -2,6 +2,8 @@ import type { CSSProperties } from "react";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
 import { questionDrafts } from "../../../features/admin/mock-data";
 
+// TODO(admin-feature): Full vetted question editor — load/save drafts via `/api/admin/questions`, validate taxonomy + answer schema, publish through `/api/admin/questions/[id]/publish` with audit logging (see api README).
+
 export default function AdminQuestionsPage() {
   return (
     <AdminShell

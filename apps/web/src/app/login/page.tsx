@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { authFlowNotes, authHighlights } from "../../features/auth/mock-auth";
 
+// TODO(auth-feature): Wire email/password (and optional magic link) to Supabase Auth; on success resolve role and redirect students to `/dashboard`, admins to `/admin`. Handle errors inline; keep forms in this route or delegate fields to `Auth*` components from `features/auth`.
+
 export default function LoginPage() {
   return (
     <main style={{ margin: "0 auto", maxWidth: 840, padding: "2.5rem 1.5rem 3rem" }}>

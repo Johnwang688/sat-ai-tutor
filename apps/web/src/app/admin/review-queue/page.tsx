@@ -2,6 +2,8 @@ import type { CSSProperties } from "react";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
 import { variantReviewItems } from "../../../features/admin/mock-data";
 
+// TODO(admin-feature): Drive queue from `/api/admin/generate-variants` output + DB state; wire Approve/Reject to `/api/admin/review/[variantId]/approve` and `.../reject` with audit events. Keep this flow separate from vetted `Question*` editor routes.
+
 export default function AdminReviewQueuePage() {
   return (
     <AdminShell

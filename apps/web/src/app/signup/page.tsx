@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { signupProfileFields } from "../../features/auth/mock-auth";
 
+// TODO(auth-feature): After auth user creation, bootstrap `profiles` (and any related rows) with submitted display name / target score / grad year, then redirect to `/dashboard`. Reuse server helpers from `features/auth/server`.
+
 export default function SignupPage() {
   return (
     <main style={{ margin: "0 auto", maxWidth: 840, padding: "2.5rem 1.5rem 3rem" }}>

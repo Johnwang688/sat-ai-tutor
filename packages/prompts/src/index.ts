@@ -1,3 +1,5 @@
+// TODO(tutor-feature): Import/assemble these templates only in server code (e.g. `POST /api/tutor/respond`); pair with `build*` context helpers and `enforce*` policy checks before calling the model.
+
 import {
   tutorContextPrompt,
   tutorContextPromptVersion,

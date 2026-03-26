@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { conceptProgress, getConceptBySlug } from "../../../features/progress/mock-progress";
 
+// TODO(practice-feature): Optional — use `POST /api/practice/generate-drill` to build a concept-targeted question set instead of linking straight to a demo session id.
+
 type ConceptDetailPageProps = {
   params: {
     conceptSlug: string;

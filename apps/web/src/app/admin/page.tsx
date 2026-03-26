@@ -6,6 +6,8 @@ import {
 } from "../../features/admin/components/admin-shell";
 import { adminSummaryMetrics } from "../../features/admin/mock-data";
 
+// TODO(admin-feature): Back overview metrics with real counts from DB; ensure entry to this area is already gated by admin role (middleware + server checks).
+
 export default function AdminPage() {
   return (
     <AdminShell

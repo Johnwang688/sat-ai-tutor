@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { getSessionSnapshot } from "../../../../features/practice/mock-practice";
 
+// TODO(practice-feature): Load session + question order from server/cache for `params.sessionId` instead of `getSessionSnapshot`. Implement question navigator pills, per-question state, and a real countdown/timer tied to session policy.
+
+// TODO(practice-feature): Wire "Save answer" to `POST /api/sessions/[sessionId]/answer` (persist attempt, refresh progress state). Wire "Submit session" to `POST /api/sessions/[sessionId]/submit` (finalize scoring, mastery updates, then navigate to review).
+
+// TODO(tutor-feature): Tutor panel — call `POST /api/tutor/respond` only (streaming optional); build context with `build*` helpers, run `enforce*` reveal policy before model calls; UI components named `Tutor*`. Do not call OpenAI from the browser.
+
 type PracticeSessionPageProps = {
   params: {
     sessionId: string;

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
+// TODO(admin-feature): Prefer `Question*` components for vetted bank workflows and `Variant*` for generated-variant review so the two pipelines stay separate in code as well as UX.
+
 type AdminShellProps = {
   title: string;
   summary: string;

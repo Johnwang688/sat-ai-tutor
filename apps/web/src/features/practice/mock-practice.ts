@@ -1,3 +1,5 @@
+// TODO(practice-feature): Move real session/question/review loading into `features/practice/server` and colocate active-session-only UI helpers as `Session*`; shared cross-session UI as `Practice*` (see features/README.md). Replace mock snapshots once APIs exist.
+
 export type PracticeMode = {
   slug: "concept-drill" | "mini-quiz" | "full-module";
   title: string;

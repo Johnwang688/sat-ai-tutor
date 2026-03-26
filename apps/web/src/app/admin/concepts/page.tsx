@@ -6,6 +6,8 @@ import {
   sectionRecords,
 } from "../../../features/admin/mock-data";
 
+// TODO(admin-feature): CRUD for section/domain/concept/subskill taxonomy (display order, slugs, relationships) via server actions or admin APIs; replace read-only mock tables.
+
 export default function AdminConceptsPage() {
   return (
     <AdminShell

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getSessionReview } from "../../../features/practice/mock-practice";
 import { getDeterministicRecommendation } from "../../../features/progress/mock-progress";
 
+// TODO(practice-feature): Load review payload from persisted post-submit data for `params.sessionId` (replace `getSessionReview` mock) so explanations and scores match what `submit` stored.
+
 type ReviewPageProps = {
   params: {
     sessionId: string;
