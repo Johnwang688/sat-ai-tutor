@@ -1,3 +1,9 @@
+import {
+  canonicalConcepts,
+  canonicalDomains,
+  canonicalSections,
+} from "../taxonomy/core-concepts";
+
 export type AdminSummaryMetric = {
   label: string;
   count: number;
@@ -34,8 +40,10 @@ export type QuestionDraft = {
   id: string;
   status: "draft" | "reviewed";
   section: "reading-writing" | "math";
-  domain: string;
-  concept: string;
+  domainSlug: string;
+  domainName: string;
+  conceptSlug: string;
+  conceptName: string;
   title: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
   updatedAt: string;
@@ -44,7 +52,8 @@ export type QuestionDraft = {
 export type VariantReviewItem = {
   id: string;
   parentQuestionId: string;
-  concept: string;
+  conceptSlug: string;
+  conceptName: string;
   validationScore: number;
   ambiguityRisk: "low" | "medium" | "high";
   generatedAt: string;
@@ -57,76 +66,41 @@ export const adminSummaryMetrics: readonly AdminSummaryMetric[] = [
   { label: "Taxonomy edits", count: 3, detail: "Unpublished section/domain/concept changes" },
 ];
 
-export const sectionRecords: readonly SectionRecord[] = [
-  {
-    id: "sec_rw",
-    slug: "reading-writing",
-    name: "Reading and Writing",
-    displayOrder: 1,
-    domainCount: 4,
-  },
-  {
-    id: "sec_math",
-    slug: "math",
-    name: "Math",
-    displayOrder: 2,
-    domainCount: 4,
-  },
-];
+export const sectionRecords: readonly SectionRecord[] = canonicalSections.map((section) => ({
+  id: section.id,
+  slug: section.slug,
+  name: section.name,
+  displayOrder: section.displayOrder,
+  domainCount: canonicalDomains.filter((domain) => domain.sectionSlug === section.slug).length,
+}));
 
-export const domainRecords: readonly DomainRecord[] = [
-  {
-    id: "dom_rw_info",
-    sectionSlug: "reading-writing",
-    slug: "information-and-ideas",
-    name: "Information and Ideas",
-    conceptCount: 8,
-    displayOrder: 1,
-  },
-  {
-    id: "dom_math_algebra",
-    sectionSlug: "math",
-    slug: "algebra",
-    name: "Algebra",
-    conceptCount: 11,
-    displayOrder: 1,
-  },
-  {
-    id: "dom_math_adv",
-    sectionSlug: "math",
-    slug: "advanced-math",
-    name: "Advanced Math",
-    conceptCount: 9,
-    displayOrder: 2,
-  },
-];
+export const domainRecords: readonly DomainRecord[] = canonicalDomains.map((domain) => ({
+  id: domain.id,
+  sectionSlug: domain.sectionSlug,
+  slug: domain.slug,
+  name: domain.name,
+  conceptCount: canonicalConcepts.filter((concept) => concept.domainSlug === domain.slug).length,
+  displayOrder: domain.displayOrder,
+}));
 
-export const conceptRecords: readonly ConceptRecord[] = [
-  {
-    id: "con_linear_eq",
-    domainSlug: "algebra",
-    slug: "linear-equations-one-variable",
-    name: "Linear equations in one variable",
-    subskillCount: 5,
-    displayOrder: 1,
-  },
-  {
-    id: "con_transition",
-    domainSlug: "information-and-ideas",
-    slug: "main-idea-and-purpose",
-    name: "Main idea and purpose",
-    subskillCount: 4,
-    displayOrder: 2,
-  },
-];
+export const conceptRecords: readonly ConceptRecord[] = canonicalConcepts.map((concept) => ({
+  id: concept.id,
+  domainSlug: concept.domainSlug,
+  slug: concept.slug,
+  name: concept.name,
+  subskillCount: 0,
+  displayOrder: concept.displayOrder,
+}));
 
 export const questionDrafts: readonly QuestionDraft[] = [
   {
     id: "q_1023",
     status: "draft",
     section: "math",
-    domain: "Algebra",
-    concept: "Linear equations in one variable",
+    domainSlug: "algebra",
+    domainName: "Algebra",
+    conceptSlug: "linear-equations-in-one-variable",
+    conceptName: "Linear equations in one variable",
     title: "Solve an equation with variables on both sides",
     difficulty: 2,
     updatedAt: "2026-03-23",
@@ -135,8 +109,10 @@ export const questionDrafts: readonly QuestionDraft[] = [
     id: "q_1037",
     status: "reviewed",
     section: "reading-writing",
-    domain: "Information and Ideas",
-    concept: "Main idea and purpose",
+    domainSlug: "information-and-ideas",
+    domainName: "Information and Ideas",
+    conceptSlug: "central-ideas-and-details",
+    conceptName: "Central Ideas and Details",
     title: "Identify the central claim in a short passage",
     difficulty: 3,
     updatedAt: "2026-03-24",
@@ -147,7 +123,8 @@ export const variantReviewItems: readonly VariantReviewItem[] = [
   {
     id: "var_401",
     parentQuestionId: "q_0871",
-    concept: "Linear functions",
+    conceptSlug: "linear-functions",
+    conceptName: "Linear functions",
     validationScore: 96,
     ambiguityRisk: "low",
     generatedAt: "2026-03-24",
@@ -156,7 +133,8 @@ export const variantReviewItems: readonly VariantReviewItem[] = [
   {
     id: "var_402",
     parentQuestionId: "q_0871",
-    concept: "Linear functions",
+    conceptSlug: "linear-functions",
+    conceptName: "Linear functions",
     validationScore: 82,
     ambiguityRisk: "medium",
     generatedAt: "2026-03-24",
@@ -165,7 +143,8 @@ export const variantReviewItems: readonly VariantReviewItem[] = [
   {
     id: "var_410",
     parentQuestionId: "q_0610",
-    concept: "Command of evidence",
+    conceptSlug: "command-of-evidence-textual",
+    conceptName: "Command of Evidence (Textual)",
     validationScore: 71,
     ambiguityRisk: "high",
     generatedAt: "2026-03-25",

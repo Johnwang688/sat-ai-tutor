@@ -26,7 +26,8 @@ export async function POST(request: Request) {
     const variants = generateVariants(
       {
         parentQuestionId,
-        concept: typeof body.concept === "string" ? body.concept : undefined,
+        conceptSlug:
+          typeof body.conceptSlug === "string" ? body.conceptSlug : undefined,
         count: parsedCount ?? undefined,
       },
       actor,

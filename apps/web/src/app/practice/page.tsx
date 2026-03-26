@@ -1,9 +1,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { parseAuthSessionFromCookies } from "../../features/auth/server";
-import { conceptOptions, practiceModes } from "../../features/practice/mock-practice";
 import {
+  conceptOptions,
+  practiceModes,
+} from "../../features/practice/mock-practice";
+import {
+  conceptBelongsToSection,
   createSession,
+  DEFAULT_CONCEPT_SLUG,
   DEFAULT_PRACTICE_USER_ID,
   type SectionSlug,
   type SessionTypeSlug,
@@ -30,11 +35,16 @@ async function startPracticeAction(formData: FormData) {
 
   const cookieStore = await cookies();
   const session = parseAuthSessionFromCookies(cookieStore);
+  const section = asSection(formData.get("section"));
+  const requestedConceptSlug = String(formData.get("concept") ?? "").trim();
   const created = createSession({
     userId: session?.userId ?? DEFAULT_PRACTICE_USER_ID,
     sessionType: asSessionType(formData.get("sessionType")),
-    section: asSection(formData.get("section")),
-    conceptSlug: String(formData.get("concept") ?? "").trim() || undefined,
+    section,
+    conceptSlug:
+      requestedConceptSlug && conceptBelongsToSection(requestedConceptSlug, section)
+        ? requestedConceptSlug
+        : undefined,
   });
 
   redirect(`/practice/session/${created.sessionId}`);
@@ -94,7 +104,7 @@ export default function PracticePage() {
           <label htmlFor="concept" style={labelStyle}>
             Concept filter (for drill mode)
           </label>
-          <select id="concept" name="concept" style={inputStyle} defaultValue="linear-equations">
+          <select id="concept" name="concept" style={inputStyle} defaultValue={DEFAULT_CONCEPT_SLUG}>
             {conceptOptions.map((concept) => (
               <option key={concept.slug} value={concept.slug}>
                 {concept.label}

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { StartConceptDrillButton } from "../../../features/practice/components/start-concept-drill-button";
-import { DEFAULT_PRACTICE_USER_ID } from "../../../features/practice/server";
+import {
+  DEFAULT_PRACTICE_USER_ID,
+  hasPracticeQuestionsForConcept,
+} from "../../../features/practice/server";
 import {
   getConceptBySlug,
   getProgressOverview,
@@ -16,6 +19,7 @@ export default async function ConceptDetailPage({ params }: ConceptDetailPagePro
   const { conceptSlug } = await params;
   const fallbackConcept = getProgressOverview(DEFAULT_PRACTICE_USER_ID).conceptProgress[0];
   const concept = getConceptBySlug(conceptSlug, DEFAULT_PRACTICE_USER_ID) ?? fallbackConcept;
+  const canStartDrill = hasPracticeQuestionsForConcept(concept.slug);
 
   return (
     <main style={{ margin: "0 auto", maxWidth: 980, padding: "2rem 1.25rem 3rem" }}>
@@ -50,10 +54,16 @@ export default async function ConceptDetailPage({ params }: ConceptDetailPagePro
           switch to a mixed mini quiz.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem", alignItems: "center" }}>
-          <StartConceptDrillButton
-            conceptSlug={concept.slug}
-            section={concept.section === "Math" ? "math" : "reading-writing"}
-          />
+          {canStartDrill ? (
+            <StartConceptDrillButton
+              conceptSlug={concept.slug}
+              section={concept.section === "Math" ? "math" : "reading-writing"}
+            />
+          ) : (
+            <p style={{ margin: 0, color: "#475569" }}>
+              No practice questions are assigned to this concept yet.
+            </p>
+          )}
           <Link href="/practice" style={secondaryButtonStyle}>
             Adjust practice setup
           </Link>

@@ -1,3 +1,10 @@
+import {
+  canonicalConceptCatalog,
+  getCanonicalConcept,
+  getConceptOptionsForSection,
+  type CanonicalConceptCatalogItem,
+} from "../taxonomy/core-concepts";
+
 export type SectionSlug = "reading-writing" | "math";
 export type SectionLabel = "Reading and Writing" | "Math";
 export type SessionTypeSlug = "concept-drill" | "mini-quiz" | "full-module";
@@ -12,23 +19,8 @@ export type PracticeMode = {
   durationSeconds: number;
 };
 
-export type ConceptCatalogItem = {
-  slug: string;
-  name: string;
-  section: SectionLabel;
-  sectionSlug: SectionSlug;
-  domain: string;
-  subskills: ReadonlyArray<{
-    name: string;
-    masteryPercent: number;
-    attempts: number;
-  }>;
-  baseline: {
-    attempts: number;
-    masteryPercent: number;
-    recentAccuracyPercent: number;
-    lastPracticedAt: string;
-  };
+export type ConceptCatalogItem = CanonicalConceptCatalogItem & {
+  hasPracticeQuestions: boolean;
 };
 
 type QuestionBankItem = {
@@ -205,6 +197,7 @@ export type GenerateDrillResponse = {
 };
 
 export const DEFAULT_PRACTICE_USER_ID = "student-demo";
+export const DEFAULT_CONCEPT_SLUG = "linear-equations-in-one-variable";
 
 export const practiceModes: ReadonlyArray<PracticeMode> = [
   {
@@ -233,209 +226,140 @@ export const practiceModes: ReadonlyArray<PracticeMode> = [
   },
 ];
 
-export const conceptCatalog: ReadonlyArray<ConceptCatalogItem> = [
-  {
-    slug: "linear-equations",
-    name: "Linear Equations in One Variable",
-    section: "Math",
-    sectionSlug: "math",
-    domain: "Algebra",
-    baseline: {
-      attempts: 31,
-      masteryPercent: 62,
-      recentAccuracyPercent: 58,
-      lastPracticedAt: "2026-03-23",
-    },
-    subskills: [
-      { name: "One-step equations", masteryPercent: 79, attempts: 11 },
-      { name: "Multi-step equations", masteryPercent: 61, attempts: 12 },
-      { name: "Word problem translation", masteryPercent: 48, attempts: 8 },
-    ],
-  },
-  {
-    slug: "transitions",
-    name: "Transitions",
-    section: "Reading and Writing",
-    sectionSlug: "reading-writing",
-    domain: "Expression of Ideas",
-    baseline: {
-      attempts: 24,
-      masteryPercent: 76,
-      recentAccuracyPercent: 80,
-      lastPracticedAt: "2026-03-24",
-    },
-    subskills: [
-      { name: "Cause and effect transitions", masteryPercent: 72, attempts: 10 },
-      { name: "Contrast transitions", masteryPercent: 79, attempts: 7 },
-      { name: "Sequence transitions", masteryPercent: 77, attempts: 7 },
-    ],
-  },
-  {
-    slug: "punctuation",
-    name: "Punctuation",
-    section: "Reading and Writing",
-    sectionSlug: "reading-writing",
-    domain: "Standard English Conventions",
-    baseline: {
-      attempts: 20,
-      masteryPercent: 69,
-      recentAccuracyPercent: 65,
-      lastPracticedAt: "2026-03-22",
-    },
-    subskills: [
-      { name: "Commas", masteryPercent: 72, attempts: 8 },
-      { name: "Semicolons", masteryPercent: 61, attempts: 6 },
-      { name: "Dashes and colons", masteryPercent: 68, attempts: 6 },
-    ],
-  },
-];
+function makeQuestion(
+  id: string,
+  conceptSlug: string,
+  prompt: string,
+  choices: [string, string, string, string],
+  correctChoiceIndex: number,
+  explanation: string,
+  desmosRelevant: boolean,
+): QuestionBankItem {
+  const concept = getCanonicalConcept(conceptSlug);
+  if (!concept) {
+    throw new Error(`Unknown concept slug: ${conceptSlug}`);
+  }
+
+  return {
+    id,
+    sectionSlug: concept.sectionSlug,
+    section: concept.sectionName,
+    domain: concept.domainName,
+    conceptSlug: concept.slug,
+    concept: concept.name,
+    prompt,
+    choices,
+    correctChoiceIndex,
+    explanation,
+    desmosRelevant,
+  };
+}
 
 const questionBank: ReadonlyArray<QuestionBankItem> = [
-  {
-    id: "q-101",
-    sectionSlug: "math",
-    section: "Math",
-    domain: "Algebra",
-    conceptSlug: "linear-equations",
-    concept: "Linear Equations in One Variable",
-    prompt:
-      "Solve for x: 3(x - 4) + 5 = 2x + 9. Choose the value that satisfies the equation.",
-    choices: ["x = 2", "x = 4", "x = 8", "x = 16"],
-    correctChoiceIndex: 3,
-    explanation:
-      "Distribute: 3x - 12 + 5 = 2x + 9, so 3x - 7 = 2x + 9. Subtract 2x to get x - 7 = 9, then x = 16.",
-    desmosRelevant: true,
-  },
-  {
-    id: "q-102",
-    sectionSlug: "math",
-    section: "Math",
-    domain: "Algebra",
-    conceptSlug: "linear-equations",
-    concept: "Linear Equations in One Variable",
-    prompt:
-      "A phone plan costs $18 plus $4 per gigabyte. Which equation models total cost y for x gigabytes?",
-    choices: ["y = 4x + 18", "y = 18x + 4", "y = 4x - 18", "y = 18 - 4x"],
-    correctChoiceIndex: 0,
-    explanation:
-      "The fixed fee is the y-intercept (18) and the per-gigabyte rate is slope (4), giving y = 4x + 18.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-103",
-    sectionSlug: "math",
-    section: "Math",
-    domain: "Algebra",
-    conceptSlug: "linear-equations",
-    concept: "Linear Equations in One Variable",
-    prompt: "If 5x + 1 = 3x + 13, what is x?",
-    choices: ["4", "5", "6", "7"],
-    correctChoiceIndex: 2,
-    explanation:
-      "Move terms: 5x - 3x = 13 - 1, so 2x = 12 and x = 6.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-201",
-    sectionSlug: "reading-writing",
-    section: "Reading and Writing",
-    domain: "Expression of Ideas",
-    conceptSlug: "transitions",
-    concept: "Transitions",
-    prompt:
-      "The scientist repeated the trial three times; ____ the result remained consistent.",
-    choices: ["however", "therefore", "for example", "meanwhile"],
-    correctChoiceIndex: 1,
-    explanation:
-      "The second clause states an outcome from repeated trials, so a cause/effect transition such as 'therefore' fits.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-202",
-    sectionSlug: "reading-writing",
-    section: "Reading and Writing",
-    domain: "Expression of Ideas",
-    conceptSlug: "transitions",
-    concept: "Transitions",
-    prompt:
-      "The team improved attendance this month; ____, class participation also rose.",
-    choices: ["similarly", "in contrast", "as a result", "for instance"],
-    correctChoiceIndex: 2,
-    explanation:
-      "The second statement follows from the first, so 'as a result' best signals consequence.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-203",
-    sectionSlug: "reading-writing",
-    section: "Reading and Writing",
-    domain: "Expression of Ideas",
-    conceptSlug: "transitions",
-    concept: "Transitions",
-    prompt:
-      "The proposal was expensive; ____ it promised long-term savings.",
-    choices: ["nevertheless", "for example", "therefore", "similarly"],
-    correctChoiceIndex: 0,
-    explanation:
-      "The second clause contrasts with the first, so a concession transition like 'nevertheless' is appropriate.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-301",
-    sectionSlug: "reading-writing",
-    section: "Reading and Writing",
-    domain: "Standard English Conventions",
-    conceptSlug: "punctuation",
-    concept: "Punctuation",
-    prompt:
-      "Choose the sentence with correct punctuation.",
-    choices: [
+  makeQuestion(
+    "q-101",
+    "linear-equations-in-one-variable",
+    "Solve for x: 3(x - 4) + 5 = 2x + 9. Choose the value that satisfies the equation.",
+    ["x = 2", "x = 4", "x = 8", "x = 16"],
+    3,
+    "Distribute: 3x - 12 + 5 = 2x + 9, so 3x - 7 = 2x + 9. Subtract 2x to get x - 7 = 9, then x = 16.",
+    true,
+  ),
+  makeQuestion(
+    "q-102",
+    "linear-equations-in-one-variable",
+    "If 5x + 1 = 3x + 13, what is x?",
+    ["4", "5", "6", "7"],
+    2,
+    "Move terms: 5x - 3x = 13 - 1, so 2x = 12 and x = 6.",
+    false,
+  ),
+  makeQuestion(
+    "q-103",
+    "linear-equations-in-one-variable",
+    "Solve 4x - 9 = 19. Which value of x makes the equation true?",
+    ["5", "7", "8", "10"],
+    1,
+    "Add 9 to both sides to get 4x = 28, then divide by 4 to get x = 7.",
+    false,
+  ),
+  makeQuestion(
+    "q-201",
+    "transitions",
+    "The scientist repeated the trial three times; ____ the result remained consistent.",
+    ["however", "therefore", "for example", "meanwhile"],
+    1,
+    "The second clause states an outcome from repeated trials, so a cause-and-effect transition such as 'therefore' fits.",
+    false,
+  ),
+  makeQuestion(
+    "q-202",
+    "transitions",
+    "The team improved attendance this month; ____, class participation also rose.",
+    ["similarly", "in contrast", "as a result", "for instance"],
+    2,
+    "The second statement follows from the first, so 'as a result' best signals consequence.",
+    false,
+  ),
+  makeQuestion(
+    "q-203",
+    "transitions",
+    "The proposal was expensive; ____ it promised long-term savings.",
+    ["nevertheless", "for example", "therefore", "similarly"],
+    0,
+    "The second clause contrasts with the first, so a concession transition like 'nevertheless' is appropriate.",
+    false,
+  ),
+  makeQuestion(
+    "q-301",
+    "boundaries-punctuation",
+    "Choose the sentence with correct punctuation.",
+    [
       "Maya packed snacks, and water and she left early.",
       "Maya packed snacks and water, and she left early.",
       "Maya, packed snacks and water and she left early.",
       "Maya packed snacks and water and, she left early.",
     ],
-    correctChoiceIndex: 1,
-    explanation:
-      "A comma before 'and' is needed because it joins two independent clauses.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-302",
-    sectionSlug: "reading-writing",
-    section: "Reading and Writing",
-    domain: "Standard English Conventions",
-    conceptSlug: "punctuation",
-    concept: "Punctuation",
-    prompt:
-      "Which option correctly punctuates the sentence?",
-    choices: [
+    1,
+    "A comma before 'and' is needed because it joins two independent clauses.",
+    false,
+  ),
+  makeQuestion(
+    "q-302",
+    "boundaries-punctuation",
+    "Which option correctly punctuates the sentence?",
+    [
       "The museum closed early however, the staff stayed to prepare.",
       "The museum closed early; however, the staff stayed to prepare.",
       "The museum closed early however the staff stayed, to prepare.",
       "The museum closed early: however the staff stayed to prepare.",
     ],
-    correctChoiceIndex: 1,
-    explanation:
-      "A semicolon can join related independent clauses, and 'however' is followed by a comma.",
-    desmosRelevant: false,
-  },
-  {
-    id: "q-303",
-    sectionSlug: "reading-writing",
-    section: "Reading and Writing",
-    domain: "Standard English Conventions",
-    conceptSlug: "punctuation",
-    concept: "Punctuation",
-    prompt:
-      "The volunteers brought flashlights ____ extra batteries.",
-    choices: [",", ";", ":", "no punctuation"],
-    correctChoiceIndex: 2,
-    explanation:
-      "A colon introduces a list or explanation after an independent clause.",
-    desmosRelevant: false,
-  },
+    1,
+    "A semicolon can join related independent clauses, and 'however' is followed by a comma.",
+    false,
+  ),
+  makeQuestion(
+    "q-303",
+    "boundaries-punctuation",
+    "The volunteers brought flashlights ____ extra batteries.",
+    [",", ";", ":", "no punctuation"],
+    2,
+    "A colon introduces a list or explanation after an independent clause.",
+    false,
+  ),
 ];
+
+const conceptQuestionCounts = questionBank.reduce<Record<string, number>>((counts, question) => {
+  counts[question.conceptSlug] = (counts[question.conceptSlug] ?? 0) + 1;
+  return counts;
+}, {});
+
+export const conceptCatalog: ReadonlyArray<ConceptCatalogItem> = canonicalConceptCatalog.map(
+  (concept) => ({
+    ...concept,
+    hasPracticeQuestions: Boolean(conceptQuestionCounts[concept.slug]),
+  }),
+);
 
 function getDefaultUserState(): UserProgressState {
   return {
@@ -672,6 +596,13 @@ function applyProgressUpdates(userId: string, session: SessionState, review: Ses
   ].slice(0, 8);
 }
 
+function getFirstAvailableConceptSlug(section: SectionSlug): string {
+  return (
+    getConceptOptionsForSection(section).find((concept) => conceptQuestionCounts[concept.slug])?.slug
+      ?? DEFAULT_CONCEPT_SLUG
+  );
+}
+
 export function resolvePracticeUserId(request: Request): string {
   const headerUserId = request.headers.get("x-user-id");
   if (headerUserId && headerUserId.trim()) {
@@ -702,17 +633,48 @@ export function getConceptCatalog(): ReadonlyArray<ConceptCatalogItem> {
   return conceptCatalog;
 }
 
+export function getPracticeConceptOptions(
+  section?: SectionSlug,
+): ReadonlyArray<{
+  slug: string;
+  label: string;
+  sectionSlug: SectionSlug;
+}> {
+  return getConceptOptionsForSection(section);
+}
+
+export function hasPracticeQuestionsForConcept(conceptSlug: string): boolean {
+  return Boolean(conceptQuestionCounts[conceptSlug]);
+}
+
+export function conceptBelongsToSection(
+  conceptSlug: string,
+  section: SectionSlug,
+): boolean {
+  return getCanonicalConcept(conceptSlug)?.sectionSlug === section;
+}
+
 export function createSession(input: CreateSessionInput): CreateSessionResponse {
   const section = normalizeSection(input.section);
   if (!section) {
     throw new Error("Invalid section.");
   }
+
   const mode = getSessionMode(input.sessionType);
+  const resolvedConceptSlug =
+    mode.slug === "concept-drill"
+      ? input.conceptSlug ?? getFirstAvailableConceptSlug(section)
+      : input.conceptSlug;
+  const concept = resolvedConceptSlug ? getCanonicalConcept(resolvedConceptSlug) : undefined;
+  if (concept && concept.sectionSlug !== section) {
+    throw new Error("Selected concept does not belong to the chosen section.");
+  }
+
   const store = getStore();
   const sessionId = `sess-${store.nextSessionId}`;
   store.nextSessionId += 1;
 
-  const questions = buildSessionQuestions(section, mode, input.conceptSlug);
+  const questions = buildSessionQuestions(section, mode, resolvedConceptSlug);
   const now = new Date().toISOString();
   const sectionLabel = section === "math" ? "Math" : "Reading and Writing";
 
@@ -723,7 +685,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResponse 
     sessionTypeSlug: mode.slug,
     section: sectionLabel,
     sectionSlug: section,
-    conceptSlug: input.conceptSlug ?? null,
+    conceptSlug: resolvedConceptSlug ?? null,
     startedAt: now,
     durationSeconds: mode.durationSeconds,
     status: "active",
@@ -830,8 +792,16 @@ export function generateDrill(input: GenerateDrillInput): GenerateDrillResponse 
     (input.conceptSlug
       ? conceptCatalog.find((item) => item.slug === input.conceptSlug)
       : undefined) ??
-    conceptCatalog.find((item) => item.sectionSlug === (input.section ?? "math")) ??
+    conceptCatalog.find(
+      (item) =>
+        item.sectionSlug === (input.section ?? "math") && item.hasPracticeQuestions,
+    ) ??
+    conceptCatalog.find((item) => item.hasPracticeQuestions) ??
     conceptCatalog[0];
+
+  if (!concept) {
+    throw new Error("No concepts are available.");
+  }
 
   const candidateQuestions = questionBank
     .filter((question) => question.conceptSlug === concept.slug)

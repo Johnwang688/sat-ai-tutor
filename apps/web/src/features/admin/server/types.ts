@@ -6,8 +6,10 @@ export type VettedQuestionRecord = {
   id: string;
   status: QuestionStatus;
   section: SatSection;
-  domain: string;
-  concept: string;
+  domainSlug: string;
+  domainName: string;
+  conceptSlug: string;
+  conceptName: string;
   title: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
   calculatorAllowed: boolean;
@@ -24,7 +26,8 @@ export type VariantAmbiguityRisk = "low" | "medium" | "high";
 export type GeneratedVariantRecord = {
   id: string;
   parentQuestionId: string;
-  concept: string;
+  conceptSlug: string;
+  conceptName: string;
   validationScore: number;
   ambiguityRisk: VariantAmbiguityRisk;
   generatedAt: string;

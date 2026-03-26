@@ -5,6 +5,7 @@ import {
   sectionRecords,
   variantReviewItems,
 } from "../mock-data";
+import { getCanonicalConcept } from "../../taxonomy/core-concepts";
 import type {
   AdminActor,
   AdminAuditEvent,
@@ -25,9 +26,7 @@ type QuestionListFilters = {
 
 type CreateQuestionDraftInput = {
   title: string;
-  section: SatSection;
-  domain: string;
-  concept: string;
+  conceptSlug: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
   calculatorAllowed?: boolean;
   desmosRelevant?: boolean;
@@ -39,7 +38,7 @@ type UpdateQuestionDraftInput = Partial<CreateQuestionDraftInput>;
 
 type GenerateVariantInput = {
   parentQuestionId: string;
-  concept?: string;
+  conceptSlug?: string;
   count?: number;
 };
 
@@ -73,8 +72,10 @@ const questionStore: VettedQuestionRecord[] = questionDrafts.map((draft) => ({
   id: draft.id,
   status: "draft",
   section: draft.section,
-  domain: draft.domain,
-  concept: draft.concept,
+  domainSlug: draft.domainSlug,
+  domainName: draft.domainName,
+  conceptSlug: draft.conceptSlug,
+  conceptName: draft.conceptName,
   title: draft.title,
   difficulty: draft.difficulty,
   calculatorAllowed: true,
@@ -88,7 +89,8 @@ const questionStore: VettedQuestionRecord[] = questionDrafts.map((draft) => ({
 const variantStore: GeneratedVariantRecord[] = variantReviewItems.map((item) => ({
   id: item.id,
   parentQuestionId: item.parentQuestionId,
-  concept: item.concept,
+  conceptSlug: item.conceptSlug,
+  conceptName: item.conceptName,
   validationScore: item.validationScore,
   ambiguityRisk: item.ambiguityRisk,
   generatedAt: item.generatedAt,
@@ -166,6 +168,21 @@ function compareByDateDesc<T extends { updatedAt: string }>(left: T, right: T): 
   return right.updatedAt.localeCompare(left.updatedAt);
 }
 
+function getCanonicalConceptDetails(conceptSlug: string) {
+  const concept = getCanonicalConcept(conceptSlug.trim());
+  if (!concept) {
+    throw new Error("Unknown concept slug.");
+  }
+
+  return {
+    section: concept.sectionSlug,
+    domainSlug: concept.domainSlug,
+    domainName: concept.domainName,
+    conceptSlug: concept.slug,
+    conceptName: concept.name,
+  };
+}
+
 export function getAdminDashboardSummary() {
   const pendingVariants = variantStore.filter((item) => item.status === "pending").length;
   const draftQuestions = questionStore.filter((item) => item.status === "draft").length;
@@ -213,8 +230,10 @@ export function listVettedQuestions(filters: QuestionListFilters = {}): VettedQu
         question.id,
         question.title,
         question.section,
-        question.domain,
-        question.concept,
+        question.domainName,
+        question.conceptName,
+        question.domainSlug,
+        question.conceptSlug,
       ]
         .join(" ")
         .toLowerCase();
@@ -231,12 +250,15 @@ export function createQuestionDraft(
   input: CreateQuestionDraftInput,
   actor: AdminActor,
 ): VettedQuestionRecord {
+  const taxonomy = getCanonicalConceptDetails(input.conceptSlug);
   const record: VettedQuestionRecord = {
     id: nextId("q"),
     status: "draft",
-    section: input.section,
-    domain: input.domain.trim(),
-    concept: input.concept.trim(),
+    section: taxonomy.section,
+    domainSlug: taxonomy.domainSlug,
+    domainName: taxonomy.domainName,
+    conceptSlug: taxonomy.conceptSlug,
+    conceptName: taxonomy.conceptName,
     title: input.title.trim(),
     difficulty: input.difficulty,
     calculatorAllowed: Boolean(input.calculatorAllowed),
@@ -249,8 +271,8 @@ export function createQuestionDraft(
   questionStore.unshift(record);
   writeAudit(actor, "question.created", record.id, {
     section: record.section,
-    domain: record.domain,
-    concept: record.concept,
+    domainSlug: record.domainSlug,
+    conceptSlug: record.conceptSlug,
   });
 
   return record;
@@ -273,14 +295,13 @@ export function updateQuestionDraft(
   if (typeof input.title === "string") {
     question.title = input.title.trim();
   }
-  if (typeof input.section === "string") {
-    question.section = input.section;
-  }
-  if (typeof input.domain === "string") {
-    question.domain = input.domain.trim();
-  }
-  if (typeof input.concept === "string") {
-    question.concept = input.concept.trim();
+  if (typeof input.conceptSlug === "string") {
+    const taxonomy = getCanonicalConceptDetails(input.conceptSlug);
+    question.section = taxonomy.section;
+    question.domainSlug = taxonomy.domainSlug;
+    question.domainName = taxonomy.domainName;
+    question.conceptSlug = taxonomy.conceptSlug;
+    question.conceptName = taxonomy.conceptName;
   }
   if (typeof input.difficulty === "number") {
     question.difficulty = input.difficulty;
@@ -301,8 +322,8 @@ export function updateQuestionDraft(
   question.updatedAt = nowIsoDate();
   writeAudit(actor, "question.updated", question.id, {
     section: question.section,
-    domain: question.domain,
-    concept: question.concept,
+    domainSlug: question.domainSlug,
+    conceptSlug: question.conceptSlug,
   });
 
   return question;
@@ -348,16 +369,19 @@ export function generateVariants(
   actor: AdminActor,
 ): GeneratedVariantRecord[] {
   const parentQuestion = getVettedQuestionById(input.parentQuestionId);
-  const baseConcept = input.concept?.trim() || parentQuestion?.concept || "Unassigned Concept";
+  const taxonomy = getCanonicalConceptDetails(
+    input.conceptSlug?.trim() || parentQuestion?.conceptSlug || "linear-functions",
+  );
   const count = Math.max(1, Math.min(5, input.count ?? 2));
   const created: GeneratedVariantRecord[] = [];
 
   for (let index = 0; index < count; index += 1) {
-    const validationScore = 72 + ((index + baseConcept.length) % 28);
+    const validationScore = 72 + ((index + taxonomy.conceptName.length) % 28);
     const item: GeneratedVariantRecord = {
       id: nextId("var"),
       parentQuestionId: input.parentQuestionId,
-      concept: baseConcept,
+      conceptSlug: taxonomy.conceptSlug,
+      conceptName: taxonomy.conceptName,
       validationScore,
       ambiguityRisk: pickRiskFromScore(validationScore),
       generatedAt: nowIsoDate(),
@@ -370,7 +394,7 @@ export function generateVariants(
 
   writeAudit(actor, "variant.generated", input.parentQuestionId, {
     count: created.length,
-    concept: baseConcept,
+    conceptSlug: taxonomy.conceptSlug,
   });
 
   return created;

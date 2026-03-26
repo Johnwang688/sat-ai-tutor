@@ -1,5 +1,6 @@
 import {
   conceptCatalog,
+  DEFAULT_CONCEPT_SLUG,
   DEFAULT_PRACTICE_USER_ID,
   getUserProgressState,
 } from "../practice/server";
@@ -168,10 +169,10 @@ export function getDeterministicRecommendation(
 
   if (!nextConcept) {
     return {
-      conceptSlug: "linear-equations",
-      recommendationTitle: "Next drill: Linear Equations in One Variable",
+      conceptSlug: DEFAULT_CONCEPT_SLUG,
+      recommendationTitle: "Next drill: Linear equations in one variable",
       reason: "No progress data yet, so we start with a foundational algebra concept.",
-      targetRoute: "/concepts/linear-equations",
+      targetRoute: `/concepts/${DEFAULT_CONCEPT_SLUG}`,
     };
   }
 

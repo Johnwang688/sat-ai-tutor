@@ -1,8 +1,9 @@
 import {
   createSession,
+  DEFAULT_CONCEPT_SLUG,
   DEFAULT_PRACTICE_USER_ID,
   finalizeSession,
-  getConceptCatalog,
+  getPracticeConceptOptions,
   getPracticeModeList,
   getSessionReview as getSessionReviewForUser,
   getSessionSnapshot as getSessionSnapshotForUser,
@@ -16,17 +17,14 @@ export type { PracticeMode, SessionReview, SessionSnapshot };
 
 export const practiceModes: ReadonlyArray<PracticeMode> = getPracticeModeList();
 
-export const conceptOptions = getConceptCatalog().map((concept) => ({
-  slug: concept.slug,
-  label: concept.name,
-}));
+export const conceptOptions = getPracticeConceptOptions();
 
 function getFallbackSession(sessionId: string): SessionSnapshot {
   const created = createSession({
     userId: DEFAULT_PRACTICE_USER_ID,
     sessionType: "concept-drill",
     section: "math",
-    conceptSlug: "linear-equations",
+    conceptSlug: DEFAULT_CONCEPT_SLUG,
   });
   return {
     ...created.snapshot,
@@ -59,7 +57,7 @@ export function getSessionReview(sessionId: string): SessionReview {
     userId: DEFAULT_PRACTICE_USER_ID,
     sessionType: "concept-drill" satisfies SessionTypeSlug,
     section: "math",
-    conceptSlug: "linear-equations",
+    conceptSlug: DEFAULT_CONCEPT_SLUG,
   });
   return finalizeSession({
     userId: DEFAULT_PRACTICE_USER_ID,

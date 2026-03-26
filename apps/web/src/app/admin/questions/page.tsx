@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { CSSProperties } from "react";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
 import { assertAdminFromServerContext } from "@/features/admin/server/auth";
+import { getPracticeConceptOptions } from "@/features/practice/server";
 import {
   createQuestionDraft,
   listVettedQuestions,
@@ -20,9 +21,7 @@ async function createDraftAction(formData: FormData) {
   createQuestionDraft(
     {
       title: String(formData.get("title") ?? "").trim(),
-      section: String(formData.get("section")) === "reading-writing" ? "reading-writing" : "math",
-      domain: String(formData.get("domain") ?? "").trim(),
-      concept: String(formData.get("concept") ?? "").trim(),
+      conceptSlug: String(formData.get("conceptSlug") ?? "").trim(),
       difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
       calculatorAllowed: formData.get("calculatorAllowed") === "on",
       desmosRelevant: formData.get("desmosRelevant") === "on",
@@ -72,6 +71,7 @@ async function publishDraftAction(formData: FormData) {
 
 export default function AdminQuestionsPage() {
   const questions = listVettedQuestions();
+  const conceptOptions = getPracticeConceptOptions();
 
   return (
     <AdminShell
@@ -86,19 +86,14 @@ export default function AdminQuestionsPage() {
             <input style={styles.input} name="title" required />
           </label>
           <label style={styles.field}>
-            <span style={styles.label}>Section</span>
-            <select style={styles.input} name="section" defaultValue="math">
-              <option value="reading-writing">Reading and Writing</option>
-              <option value="math">Math</option>
-            </select>
-          </label>
-          <label style={styles.field}>
-            <span style={styles.label}>Domain</span>
-            <input style={styles.input} name="domain" required />
-          </label>
-          <label style={styles.field}>
             <span style={styles.label}>Concept</span>
-            <input style={styles.input} name="concept" required />
+            <select style={styles.input} name="conceptSlug" defaultValue={conceptOptions[0]?.slug} required>
+              {conceptOptions.map((concept) => (
+                <option key={concept.slug} value={concept.slug}>
+                  {concept.label}
+                </option>
+              ))}
+            </select>
           </label>
           <label style={styles.field}>
             <span style={styles.label}>Difficulty (1-5)</span>
@@ -165,8 +160,8 @@ export default function AdminQuestionsPage() {
                 </td>
                 <td style={styles.bodyCell}>{question.status}</td>
                 <td style={styles.bodyCell}>{question.section}</td>
-                <td style={styles.bodyCell}>{question.domain}</td>
-                <td style={styles.bodyCell}>{question.concept}</td>
+                <td style={styles.bodyCell}>{question.domainName}</td>
+                <td style={styles.bodyCell}>{question.conceptName}</td>
                 <td style={styles.bodyCell}>{question.difficulty}</td>
                 <td style={styles.bodyCell}>{question.updatedAt}</td>
                 <td style={styles.bodyCell}>

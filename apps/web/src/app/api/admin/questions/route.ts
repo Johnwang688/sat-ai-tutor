@@ -36,13 +36,12 @@ export async function POST(request: Request) {
     const actor = assertAdminFromRequest(request);
     const body = (await request.json()) as Record<string, unknown>;
     const title = typeof body.title === "string" ? body.title.trim() : "";
-    const section = asSection(typeof body.section === "string" ? body.section : null);
-    const domain = typeof body.domain === "string" ? body.domain.trim() : "";
-    const concept = typeof body.concept === "string" ? body.concept.trim() : "";
+    const conceptSlug =
+      typeof body.conceptSlug === "string" ? body.conceptSlug.trim() : "";
     const difficulty = Number(body.difficulty);
 
-    if (!title || !section || !domain || !concept) {
-      return jsonError("title, section, domain, and concept are required.", 400);
+    if (!title || !conceptSlug) {
+      return jsonError("title and conceptSlug are required.", 400);
     }
     if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
       return jsonError("difficulty must be an integer between 1 and 5.", 400);
@@ -51,9 +50,7 @@ export async function POST(request: Request) {
     const question = createQuestionDraft(
       {
         title,
-        section,
-        domain,
-        concept,
+        conceptSlug,
         difficulty: difficulty as 1 | 2 | 3 | 4 | 5,
         calculatorAllowed: Boolean(body.calculatorAllowed),
         desmosRelevant: Boolean(body.desmosRelevant),

@@ -13,12 +13,12 @@ async function generateVariantsAction(formData: FormData) {
   "use server";
   const actor = await assertAdminFromServerContext();
   const parentQuestionId = String(formData.get("parentQuestionId") ?? "").trim();
-  const concept = String(formData.get("concept") ?? "").trim();
+  const conceptSlug = String(formData.get("conceptSlug") ?? "").trim();
   const count = Number(formData.get("count"));
   if (!parentQuestionId || !Number.isInteger(count) || count < 1 || count > 5) {
     return;
   }
-  generateVariants({ parentQuestionId, concept, count }, actor);
+  generateVariants({ parentQuestionId, conceptSlug, count }, actor);
   revalidatePath("/admin");
   revalidatePath("/admin/review-queue");
 }
@@ -68,7 +68,7 @@ export default function AdminReviewQueuePage() {
             placeholder="Parent vetted question id (e.g. q_1023)"
             required
           />
-          <input style={styles.input} name="concept" placeholder="Concept override (optional)" />
+          <input style={styles.input} name="conceptSlug" placeholder="Concept slug override (optional)" />
           <input
             style={styles.smallInput}
             name="count"
@@ -107,7 +107,7 @@ export default function AdminReviewQueuePage() {
                 <td style={styles.bodyCell}>
                   <code>{item.parentQuestionId}</code>
                 </td>
-                <td style={styles.bodyCell}>{item.concept}</td>
+                <td style={styles.bodyCell}>{item.conceptName}</td>
                 <td style={styles.bodyCell}>{item.validationScore}</td>
                 <td style={styles.bodyCell}>
                   <span style={getRiskStyle(item.ambiguityRisk)}>{item.ambiguityRisk}</span>

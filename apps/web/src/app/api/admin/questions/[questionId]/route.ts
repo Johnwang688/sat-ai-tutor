@@ -6,13 +6,6 @@ import {
   updateQuestionDraft,
 } from "@/features/admin/server/store";
 
-function asSection(value: unknown): "reading-writing" | "math" | undefined {
-  if (value === "reading-writing" || value === "math") {
-    return value;
-  }
-  return undefined;
-}
-
 export async function GET(
   request: Request,
   context: { params: Promise<{ questionId: string }> },
@@ -49,9 +42,8 @@ export async function PATCH(
       questionId,
       {
         title: typeof body.title === "string" ? body.title : undefined,
-        section: asSection(body.section),
-        domain: typeof body.domain === "string" ? body.domain : undefined,
-        concept: typeof body.concept === "string" ? body.concept : undefined,
+        conceptSlug:
+          typeof body.conceptSlug === "string" ? body.conceptSlug : undefined,
         difficulty: difficulty as 1 | 2 | 3 | 4 | 5 | undefined,
         calculatorAllowed:
           typeof body.calculatorAllowed === "boolean"

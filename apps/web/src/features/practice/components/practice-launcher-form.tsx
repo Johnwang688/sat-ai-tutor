@@ -2,11 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { PracticeMode, SessionTypeSlug } from "../server";
+import {
+  DEFAULT_CONCEPT_SLUG,
+  type PracticeMode,
+  type SessionTypeSlug,
+} from "../server";
 
 type ConceptOption = {
   slug: string;
   label: string;
+  sectionSlug: "math" | "reading-writing";
 };
 
 type Props = {
@@ -20,11 +25,14 @@ export function PracticeLauncherForm({ modes, concepts }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [sessionType, setSessionType] = useState<SessionTypeSlug>("concept-drill");
   const [section, setSection] = useState<"math" | "reading-writing">("math");
-  const [concept, setConcept] = useState(concepts[0]?.slug ?? "linear-equations");
+  const [concept, setConcept] = useState(concepts[0]?.slug ?? DEFAULT_CONCEPT_SLUG);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const requestedConcept = concepts.find((option) => option.slug === concept);
+    const conceptSlug =
+      requestedConcept?.sectionSlug === section ? requestedConcept.slug : undefined;
 
     startTransition(async () => {
       try {
@@ -34,7 +42,7 @@ export function PracticeLauncherForm({ modes, concepts }: Props) {
           body: JSON.stringify({
             sessionType,
             section,
-            conceptSlug: sessionType === "concept-drill" ? concept : undefined,
+            conceptSlug: sessionType === "concept-drill" ? conceptSlug : undefined,
           }),
         });
 
