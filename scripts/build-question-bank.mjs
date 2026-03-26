@@ -3,6 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  parseSeedMigrationStatements,
+  removeExistingSeedPartFiles,
+  writeSplitSeedMigrationFiles,
+} from "./split-question-bank-migration.mjs";
+
 const repoRoot = process.cwd();
 const tempDir = path.join(repoRoot, ".tmp", "question-bank-build");
 const tscPath = path.join(
@@ -170,16 +176,11 @@ const jsonPath = path.join(
   "generated-question-bank.json",
 );
 const summaryPath = path.join(repoRoot, "docs", "question-bank-summary.json");
-const migrationPath = path.join(
-  repoRoot,
-  "supabase",
-  "migrations",
-  "0003_seed_initial_question_bank.sql",
-);
+const migrationsDir = path.join(repoRoot, "supabase", "migrations");
 
 ensureDir(jsonPath);
 ensureDir(summaryPath);
-ensureDir(migrationPath);
+fs.mkdirSync(migrationsDir, { recursive: true });
 
 fs.writeFileSync(jsonPath, `${JSON.stringify(questionBank, null, 2)}\n`);
 fs.writeFileSync(
@@ -195,7 +196,11 @@ fs.writeFileSync(
     2,
   )}\n`,
 );
-fs.writeFileSync(migrationPath, `${createSeedMigration(questionBank)}\n`);
+
+const seedSql = `${createSeedMigration(questionBank)}\n`;
+const parsed = parseSeedMigrationStatements(seedSql);
+removeExistingSeedPartFiles(migrationsDir);
+const migrationPaths = writeSplitSeedMigrationFiles(parsed, { migrationsDir });
 
 console.log(
   JSON.stringify(
@@ -205,7 +210,7 @@ console.log(
       countsByConcept,
       jsonPath,
       summaryPath,
-      migrationPath,
+      migrationPaths,
     },
     null,
     2,
