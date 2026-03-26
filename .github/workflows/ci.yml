@@ -1,0 +1,44 @@
+# Injects API keys from repository secrets into the job environment on each push.
+# - OPENAI_API_KEY → same name (required by apps/web/src/server/env.ts)
+# - DESMOS_API_KEY (GitHub secret) → NEXT_PUBLIC_DESMOS_API_KEY (what the app reads)
+#
+# Add secrets: Settings → Secrets and variables → Actions → New repository secret.
+
+name: CI
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      NEXT_PUBLIC_DESMOS_API_KEY: ${{ secrets.DESMOS_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify API secrets are present
+        # Does not print secret values. Fails fast if a required secret is missing.
+        run: |
+          if [ -z "${OPENAI_API_KEY}" ]; then
+            echo "::error::OPENAI_API_KEY is not set. Add the OPENAI_API_KEY repository secret."
+            exit 1
+          fi
+          if [ -z "${NEXT_PUBLIC_DESMOS_API_KEY}" ]; then
+            echo "::warning::DESMOS_API_KEY secret is empty; Desmos features may be disabled locally in CI."
+          fi
+          echo "OPENAI_API_KEY and NEXT_PUBLIC_DESMOS_API_KEY (from DESMOS_API_KEY) are available to subsequent steps."
+
+      # Add install/build/test here when package.json exists, e.g.:
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "20"
+      #     cache: "npm"
+      #     cache-dependency-path: apps/web/package-lock.json
+      # - run: npm ci
+      #   working-directory: apps/web
+      # - run: npm run build
+      #   working-directory: apps/web
