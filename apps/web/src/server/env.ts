@@ -1,11 +1,12 @@
+/** Used when `OPENAI_MODEL_TUTOR` / `OPENAI_MODEL_GENERATION` are unset or blank. */
+export const OPENAI_MODEL_DEFAULT = "gpt-5.4-nano";
+
 export const requiredEnvKeys = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "DATABASE_URL",
   "OPENAI_API_KEY",
-  "OPENAI_MODEL_TUTOR",
-  "OPENAI_MODEL_GENERATION",
 ] as const;
 
 export const optionalEnvKeys = [
@@ -20,7 +21,10 @@ export type RequiredEnvKey = (typeof requiredEnvKeys)[number];
 export type OptionalEnvKey = (typeof optionalEnvKeys)[number];
 
 type ParsedEnv = Record<RequiredEnvKey, string> &
-  Record<OptionalEnvKey, string | undefined>;
+  Record<OptionalEnvKey, string | undefined> & {
+    OPENAI_MODEL_TUTOR: string;
+    OPENAI_MODEL_GENERATION: string;
+  };
 
 export type PublicEnv = Readonly<{
   NEXT_PUBLIC_SUPABASE_URL: string;
@@ -78,9 +82,16 @@ function parseEnv(): ParsedEnv {
     optionalValues[key] = getTrimmedEnvValue(key);
   }
 
+  const openaiModelTutor =
+    getTrimmedEnvValue("OPENAI_MODEL_TUTOR") ?? OPENAI_MODEL_DEFAULT;
+  const openaiModelGeneration =
+    getTrimmedEnvValue("OPENAI_MODEL_GENERATION") ?? OPENAI_MODEL_DEFAULT;
+
   return {
     ...requiredValues,
     ...optionalValues,
+    OPENAI_MODEL_TUTOR: openaiModelTutor,
+    OPENAI_MODEL_GENERATION: openaiModelGeneration,
   };
 }
 

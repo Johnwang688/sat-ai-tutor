@@ -1,8 +1,13 @@
-# Injects API keys from repository secrets into the job environment on each push.
-# - OPENAI_API_KEY → same name (required by apps/web/src/server/env.ts)
-# - DESMOS_API_KEY (GitHub secret) → NEXT_PUBLIC_DESMOS_API_KEY (what the app reads)
+# Injects secrets into the job environment on each push (nothing is written to the repo).
 #
-# Add secrets: Settings → Secrets and variables → Actions → New repository secret.
+# Supabase in this project (see apps/web/src/server/db/client.ts, env.ts):
+# - Server REST/PostgREST calls use NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY is required by env parsing for future browser Auth (login/signup
+#   still use mock copy today; see apps/web/src/features/auth/mock-auth.ts).
+# - DATABASE_URL is the Postgres connection string (migrations / ORM); required by env.ts.
+#
+# GitHub: Settings → Secrets and variables → Actions.
+# Prefer secret names that match the env var names below (easiest to mirror .env).
 
 name: CI
 
@@ -13,6 +18,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      # Supabase + DB (required for apps/web/src/server/env.ts)
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # AI / optional Desmos (OpenAI models default to gpt-5.4-nano in apps/web/src/server/env.ts)
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       NEXT_PUBLIC_DESMOS_API_KEY: ${{ secrets.DESMOS_API_KEY }}
 
@@ -20,17 +31,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify API secrets are present
-        # Does not print secret values. Fails fast if a required secret is missing.
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Verify Supabase CLI
+        run: supabase --version
+
+      - name: Verify required secrets are present
+        # Does not print secret values (printenv only checks presence).
         run: |
-          if [ -z "${OPENAI_API_KEY}" ]; then
-            echo "::error::OPENAI_API_KEY is not set. Add the OPENAI_API_KEY repository secret."
+          missing=0
+          for var in \
+            NEXT_PUBLIC_SUPABASE_URL \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            SUPABASE_SERVICE_ROLE_KEY \
+            DATABASE_URL \
+            OPENAI_API_KEY
+          do
+            val=$(printenv "$var" 2>/dev/null || true)
+            if [ -z "$val" ]; then
+              echo "::error::$var is not set. Add a repository secret with this name."
+              missing=1
+            fi
+          done
+          if [ -z "$(printenv NEXT_PUBLIC_DESMOS_API_KEY 2>/dev/null || true)" ]; then
+            echo "::warning::DESMOS_API_KEY secret is empty; NEXT_PUBLIC_DESMOS_API_KEY will be unset in CI."
+          fi
+          if [ "$missing" -ne 0 ]; then
             exit 1
           fi
-          if [ -z "${NEXT_PUBLIC_DESMOS_API_KEY}" ]; then
-            echo "::warning::DESMOS_API_KEY secret is empty; Desmos features may be disabled locally in CI."
-          fi
-          echo "OPENAI_API_KEY and NEXT_PUBLIC_DESMOS_API_KEY (from DESMOS_API_KEY) are available to subsequent steps."
+          echo "Required env vars for apps/web/src/server/env.ts are available to subsequent steps."
+
+      # Remote migrations: add supabase/config.toml + SUPABASE_ACCESS_TOKEN, then e.g.:
+      #   supabase link --project-ref <ref>
+      #   supabase db push
+      # This repo currently only has SQL under supabase/migrations/ (no config.toml).
 
       # Add install/build/test here when package.json exists, e.g.:
       # - uses: actions/setup-node@v4
