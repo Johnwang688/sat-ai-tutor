@@ -1,11 +1,11 @@
 import {
   conceptRecords,
   domainRecords,
-  questionDrafts,
   sectionRecords,
   variantReviewItems,
 } from "../mock-data";
 import { getCanonicalConcept } from "../../taxonomy/core-concepts";
+import { listGeneratedQuestions } from "../../question-bank";
 import type {
   AdminActor,
   AdminAuditEvent,
@@ -68,22 +68,21 @@ type UpdateSectionInput = Partial<CreateSectionInput>;
 type UpdateDomainInput = Partial<CreateDomainInput>;
 type UpdateConceptInput = Partial<CreateConceptInput>;
 
-const questionStore: VettedQuestionRecord[] = questionDrafts.map((draft) => ({
-  id: draft.id,
+const questionStore: VettedQuestionRecord[] = listGeneratedQuestions().map((question) => ({
+  id: question.id,
   status: "draft",
-  section: draft.section,
-  domainSlug: draft.domainSlug,
-  domainName: draft.domainName,
-  conceptSlug: draft.conceptSlug,
-  conceptName: draft.conceptName,
-  title: draft.title,
-  difficulty: draft.difficulty,
-  calculatorAllowed: true,
-  desmosRelevant: false,
-  answerSchema: '{"type":"multiple_choice","choices":["A","B","C","D"],"correctIndex":1}',
-  explanationJson:
-    '{"summary":"Isolate terms, simplify, and solve with inverse operations."}',
-  updatedAt: draft.updatedAt,
+  section: question.sectionSlug,
+  domainSlug: question.domainSlug,
+  domainName: question.domainName,
+  conceptSlug: question.conceptSlug,
+  conceptName: question.conceptName,
+  title: question.promptJson.stem,
+  difficulty: question.difficulty,
+  calculatorAllowed: question.calculatorAllowed,
+  desmosRelevant: question.desmosRelevant,
+  answerSchema: JSON.stringify(question.answerSchemaJson),
+  explanationJson: JSON.stringify(question.explanationJson),
+  updatedAt: nowIsoDate(),
 }));
 
 const variantStore: GeneratedVariantRecord[] = variantReviewItems.map((item) => ({

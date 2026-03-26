@@ -4,6 +4,7 @@ import {
   getConceptOptionsForSection,
   type CanonicalConceptCatalogItem,
 } from "../taxonomy/core-concepts";
+import { listGeneratedQuestions } from "../question-bank";
 
 export type SectionSlug = "reading-writing" | "math";
 export type SectionLabel = "Reading and Writing" | "Math";
@@ -255,99 +256,22 @@ function makeQuestion(
   };
 }
 
-const questionBank: ReadonlyArray<QuestionBankItem> = [
+const questionBank: ReadonlyArray<QuestionBankItem> = listGeneratedQuestions().map((question) =>
   makeQuestion(
-    "q-101",
-    "linear-equations-in-one-variable",
-    "Solve for x: 3(x - 4) + 5 = 2x + 9. Choose the value that satisfies the equation.",
-    ["x = 2", "x = 4", "x = 8", "x = 16"],
-    3,
-    "Distribute: 3x - 12 + 5 = 2x + 9, so 3x - 7 = 2x + 9. Subtract 2x to get x - 7 = 9, then x = 16.",
-    true,
-  ),
-  makeQuestion(
-    "q-102",
-    "linear-equations-in-one-variable",
-    "If 5x + 1 = 3x + 13, what is x?",
-    ["4", "5", "6", "7"],
-    2,
-    "Move terms: 5x - 3x = 13 - 1, so 2x = 12 and x = 6.",
-    false,
-  ),
-  makeQuestion(
-    "q-103",
-    "linear-equations-in-one-variable",
-    "Solve 4x - 9 = 19. Which value of x makes the equation true?",
-    ["5", "7", "8", "10"],
-    1,
-    "Add 9 to both sides to get 4x = 28, then divide by 4 to get x = 7.",
-    false,
-  ),
-  makeQuestion(
-    "q-201",
-    "transitions",
-    "The scientist repeated the trial three times; ____ the result remained consistent.",
-    ["however", "therefore", "for example", "meanwhile"],
-    1,
-    "The second clause states an outcome from repeated trials, so a cause-and-effect transition such as 'therefore' fits.",
-    false,
-  ),
-  makeQuestion(
-    "q-202",
-    "transitions",
-    "The team improved attendance this month; ____, class participation also rose.",
-    ["similarly", "in contrast", "as a result", "for instance"],
-    2,
-    "The second statement follows from the first, so 'as a result' best signals consequence.",
-    false,
-  ),
-  makeQuestion(
-    "q-203",
-    "transitions",
-    "The proposal was expensive; ____ it promised long-term savings.",
-    ["nevertheless", "for example", "therefore", "similarly"],
-    0,
-    "The second clause contrasts with the first, so a concession transition like 'nevertheless' is appropriate.",
-    false,
-  ),
-  makeQuestion(
-    "q-301",
-    "boundaries-punctuation",
-    "Choose the sentence with correct punctuation.",
+    question.id,
+    question.conceptSlug,
+    question.promptJson.promptText,
     [
-      "Maya packed snacks, and water and she left early.",
-      "Maya packed snacks and water, and she left early.",
-      "Maya, packed snacks and water and she left early.",
-      "Maya packed snacks and water and, she left early.",
+      question.answerSchemaJson.choices[0] ?? "",
+      question.answerSchemaJson.choices[1] ?? "",
+      question.answerSchemaJson.choices[2] ?? "",
+      question.answerSchemaJson.choices[3] ?? "",
     ],
-    1,
-    "A comma before 'and' is needed because it joins two independent clauses.",
-    false,
+    question.answerSchemaJson.correctIndex,
+    question.explanationJson.summary,
+    question.desmosRelevant,
   ),
-  makeQuestion(
-    "q-302",
-    "boundaries-punctuation",
-    "Which option correctly punctuates the sentence?",
-    [
-      "The museum closed early however, the staff stayed to prepare.",
-      "The museum closed early; however, the staff stayed to prepare.",
-      "The museum closed early however the staff stayed, to prepare.",
-      "The museum closed early: however the staff stayed to prepare.",
-    ],
-    1,
-    "A semicolon can join related independent clauses, and 'however' is followed by a comma.",
-    false,
-  ),
-  makeQuestion(
-    "q-303",
-    "boundaries-punctuation",
-    "The volunteers brought flashlights ____ extra batteries.",
-    [",", ";", ":", "no punctuation"],
-    2,
-    "A colon introduces a list or explanation after an independent clause.",
-    false,
-  ),
-];
+);
 
 const conceptQuestionCounts = questionBank.reduce<Record<string, number>>((counts, question) => {
   counts[question.conceptSlug] = (counts[question.conceptSlug] ?? 0) + 1;
