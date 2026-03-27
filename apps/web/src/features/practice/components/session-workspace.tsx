@@ -177,6 +177,7 @@ export function SessionWorkspace({ initialSession }: Props) {
   const [calculatorStatusMessage, setCalculatorStatusMessage] = useState<string | null>(
     null,
   );
+  const [isInteractiveGraphingReady, setIsInteractiveGraphingReady] = useState(false);
   const graphContainerRef = useRef<HTMLDivElement | null>(null);
   const graphingCalculatorRef = useRef<DesmosGraphingCalculator | null>(null);
   const syncedExpressionIdsRef = useRef<ReadonlyArray<string>>([]);
@@ -207,7 +208,8 @@ export function SessionWorkspace({ initialSession }: Props) {
   }
 
   const isMathQuestion = activeQuestion.section === "Math";
-  const desmosApiKey = process.env.NEXT_PUBLIC_DESMOS_API_KEY?.trim();
+  const desmosApiKey = process.env.DESMOS_API_KEY?.trim();
+  const hasDesmosApiKey = Boolean(desmosApiKey);
 
   function updateSnapshot(
     updater: (current: ClientSessionState) => ClientSessionState,
@@ -353,26 +355,32 @@ export function SessionWorkspace({ initialSession }: Props) {
   const activeCalculatorUrl =
     calculatorModeOptions.find((option) => option.mode === calculatorMode)?.url
     ?? calculatorModeOptions[0].url;
+  const shouldUseEmbeddedGraphing =
+    calculatorMode === "graphing" && !isInteractiveGraphingReady;
 
   useEffect(() => {
     if (calculatorMode !== "graphing" || isCalculatorHidden) {
       graphingCalculatorRef.current?.destroy();
       graphingCalculatorRef.current = null;
       syncedExpressionIdsRef.current = [];
+      setIsInteractiveGraphingReady(false);
+      setCalculatorStatusMessage(null);
       return;
     }
 
-    if (!desmosApiKey) {
-      setCalculatorStatusMessage(
-        "Add the DESMOS_API_KEY repo secret to enable the interactive graphing calculator.",
-      );
+    if (!hasDesmosApiKey) {
+      graphingCalculatorRef.current?.destroy();
+      graphingCalculatorRef.current = null;
+      syncedExpressionIdsRef.current = [];
+      setIsInteractiveGraphingReady(false);
+      setCalculatorStatusMessage(null);
       return;
     }
 
     let isCancelled = false;
-    setCalculatorStatusMessage("Loading graphing calculator...");
+    setCalculatorStatusMessage("Loading interactive graphing tools...");
 
-    void ensureDesmosScript(desmosApiKey)
+    void ensureDesmosScript(desmosApiKey ?? "")
       .then(() => {
         if (isCancelled) {
           return;
@@ -394,6 +402,7 @@ export function SessionWorkspace({ initialSession }: Props) {
         graphingCalculatorRef.current = calculator;
         calculator.setMathBounds?.(DEFAULT_GRAPH_BOUNDS);
         calculator.resize();
+        setIsInteractiveGraphingReady(true);
         setCalculatorStatusMessage(null);
       })
       .catch((error: unknown) => {
@@ -401,17 +410,21 @@ export function SessionWorkspace({ initialSession }: Props) {
           return;
         }
 
+        graphingCalculatorRef.current?.destroy();
+        graphingCalculatorRef.current = null;
+        syncedExpressionIdsRef.current = [];
+        setIsInteractiveGraphingReady(false);
         setCalculatorStatusMessage(
           error instanceof Error
-            ? error.message
-            : "Unable to load the graphing calculator.",
+            ? `${error.message} Using the embedded graphing calculator instead.`
+            : "Unable to load the interactive graphing calculator. Using the embedded graphing calculator instead.",
         );
       });
 
     return () => {
       isCancelled = true;
     };
-  }, [calculatorMode, desmosApiKey, isCalculatorHidden]);
+  }, [calculatorMode, desmosApiKey, hasDesmosApiKey, isCalculatorHidden]);
 
   useEffect(() => {
     const calculator = graphingCalculatorRef.current;
@@ -633,7 +646,7 @@ export function SessionWorkspace({ initialSession }: Props) {
             </div>
 
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
-              {calculatorMode === "graphing" ? (
+              {calculatorMode === "graphing" && !shouldUseEmbeddedGraphing ? (
                 <div style={calculatorChipGroupStyle}>
                   <button type="button" style={calculatorChipStyle} onClick={() => zoomGraph(0.8)}>
                     Zoom in
@@ -668,61 +681,80 @@ export function SessionWorkspace({ initialSession }: Props) {
 
           <div style={calculatorViewportStyle}>
             {calculatorMode === "graphing" ? (
-              <div style={graphingCalculatorLayoutStyle}>
-                <section style={graphExpressionPanelStyle}>
-                  <div style={graphExpressionHeaderStyle}>
-                    <div>
-                      <strong>Equations</strong>
-                      <p style={graphExpressionCaptionStyle}>
-                        Type one expression per row. Example: `y=x^2-4` or `x=3`.
-                      </p>
-                    </div>
-                    <button type="button" style={calculatorChipStyle} onClick={addGraphExpression}>
-                      Add equation
-                    </button>
+              shouldUseEmbeddedGraphing ? (
+                <div style={embeddedGraphingLayoutStyle}>
+                  <p style={calculatorStatusHintStyle}>
+                    {calculatorStatusMessage
+                      ?? (hasDesmosApiKey
+                        ? "Using the embedded graphing calculator while the interactive tools finish loading."
+                        : "Using the embedded graphing calculator because no Desmos API key is configured for this environment.")}
+                  </p>
+                  <div style={graphViewportShellStyle}>
+                    <iframe
+                      title="graphing calculator"
+                      src={activeCalculatorUrl}
+                      style={calculatorFrameStyle}
+                      allow="clipboard-write"
+                    />
                   </div>
-
-                  <div style={graphExpressionListStyle}>
-                    {graphExpressions.map((expression, index) => (
-                      <div key={expression.id} style={graphExpressionRowStyle}>
-                        <label style={graphExpressionLabelStyle} htmlFor={expression.id}>
-                          y{index + 1}
-                        </label>
-                        <input
-                          id={expression.id}
-                          type="text"
-                          value={expression.latex}
-                          onChange={(event) =>
-                            updateGraphExpression(expression.id, event.target.value)
-                          }
-                          placeholder="Enter an equation"
-                          style={graphExpressionInputStyle}
-                        />
-                        <button
-                          type="button"
-                          style={graphExpressionRemoveButtonStyle}
-                          onClick={() => removeGraphExpression(expression.id)}
-                          aria-label={`Remove equation ${index + 1}`}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {calculatorStatusMessage ? (
-                    <p style={calculatorStatusStyle}>{calculatorStatusMessage}</p>
-                  ) : (
-                    <p style={calculatorStatusHintStyle}>
-                      Pan directly on the graph, scroll to zoom, or use the quick zoom buttons above.
-                    </p>
-                  )}
-                </section>
-
-                <div style={graphViewportShellStyle}>
-                  <div ref={graphContainerRef} style={graphViewportStyle} />
                 </div>
-              </div>
+              ) : (
+                <div style={graphingCalculatorLayoutStyle}>
+                  <section style={graphExpressionPanelStyle}>
+                    <div style={graphExpressionHeaderStyle}>
+                      <div>
+                        <strong>Equations</strong>
+                        <p style={graphExpressionCaptionStyle}>
+                          Type one expression per row. Example: `y=x^2-4` or `x=3`.
+                        </p>
+                      </div>
+                      <button type="button" style={calculatorChipStyle} onClick={addGraphExpression}>
+                        Add equation
+                      </button>
+                    </div>
+
+                    <div style={graphExpressionListStyle}>
+                      {graphExpressions.map((expression, index) => (
+                        <div key={expression.id} style={graphExpressionRowStyle}>
+                          <label style={graphExpressionLabelStyle} htmlFor={expression.id}>
+                            y{index + 1}
+                          </label>
+                          <input
+                            id={expression.id}
+                            type="text"
+                            value={expression.latex}
+                            onChange={(event) =>
+                              updateGraphExpression(expression.id, event.target.value)
+                            }
+                            placeholder="Enter an equation"
+                            style={graphExpressionInputStyle}
+                          />
+                          <button
+                            type="button"
+                            style={graphExpressionRemoveButtonStyle}
+                            onClick={() => removeGraphExpression(expression.id)}
+                            aria-label={`Remove equation ${index + 1}`}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {calculatorStatusMessage ? (
+                      <p style={calculatorStatusStyle}>{calculatorStatusMessage}</p>
+                    ) : (
+                      <p style={calculatorStatusHintStyle}>
+                        Pan directly on the graph, scroll to zoom, or use the quick zoom buttons above.
+                      </p>
+                    )}
+                  </section>
+
+                  <div style={graphViewportShellStyle}>
+                    <div ref={graphContainerRef} style={graphViewportStyle} />
+                  </div>
+                </div>
+              )
             ) : (
               <iframe
                 title={`${calculatorMode} calculator`}
@@ -970,6 +1002,14 @@ const calculatorViewportStyle: CSSProperties = {
 const graphingCalculatorLayoutStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(260px, 320px) minmax(0, 1fr)",
+  gap: "0.75rem",
+  height: "100%",
+  padding: "0.75rem",
+};
+
+const embeddedGraphingLayoutStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
   gap: "0.75rem",
   height: "100%",
   padding: "0.75rem",
