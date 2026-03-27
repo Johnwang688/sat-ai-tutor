@@ -82,6 +82,9 @@ function parseEnv(): ParsedEnv {
     optionalValues[key] = getTrimmedEnvValue(key);
   }
 
+  optionalValues.NEXT_PUBLIC_DESMOS_API_KEY ??=
+    getTrimmedEnvValue("DESMOS_API_KEY");
+
   const openaiModelTutor =
     getTrimmedEnvValue("OPENAI_MODEL_TUTOR") ?? OPENAI_MODEL_DEFAULT;
   const openaiModelGeneration =

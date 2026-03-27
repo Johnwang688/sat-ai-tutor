@@ -138,20 +138,20 @@ const calculatorSizeOptions: ReadonlyArray<{
   {
     size: "compact",
     label: "Shrink",
-    width: 320,
-    height: 420,
-  },
-  {
-    size: "standard",
-    label: "Standard",
     width: 420,
     height: 560,
   },
   {
+    size: "standard",
+    label: "Standard",
+    width: 560,
+    height: 720,
+  },
+  {
     size: "expanded",
     label: "Expand",
-    width: 520,
-    height: 680,
+    width: 680,
+    height: 920,
   },
 ];
 
@@ -364,7 +364,7 @@ export function SessionWorkspace({ initialSession }: Props) {
 
     if (!desmosApiKey) {
       setCalculatorStatusMessage(
-        "Add NEXT_PUBLIC_DESMOS_API_KEY to enable the interactive graphing calculator.",
+        "Add the DESMOS_API_KEY repo secret to enable the interactive graphing calculator.",
       );
       return;
     }
