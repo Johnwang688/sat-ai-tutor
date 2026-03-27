@@ -190,6 +190,40 @@ export function SessionWorkspace({ initialSession }: Props) {
     return () => window.clearInterval(timer);
   }, [snapshot.status]);
 
+  const [fetchedDesmosKey, setFetchedDesmosKey] = useState<string | null | undefined>(
+    undefined,
+  );
+  const buildDesmosKey = process.env.NEXT_PUBLIC_DESMOS_API_KEY?.trim() ?? "";
+
+  useEffect(() => {
+    const question = snapshot.questionOrder[activeQuestionIndex];
+    if (!question || question.section !== "Math") {
+      return;
+    }
+    if (buildDesmosKey) {
+      return;
+    }
+
+    let cancelled = false;
+    void fetch("/api/desmos/config")
+      .then((response) => response.json() as Promise<{ apiKey?: string | null }>)
+      .then((data) => {
+        if (!cancelled) {
+          const key = data.apiKey?.trim();
+          setFetchedDesmosKey(key ? key : null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFetchedDesmosKey(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [snapshot.questionOrder, activeQuestionIndex, buildDesmosKey]);
+
   const activeQuestion = snapshot.questionOrder[activeQuestionIndex];
   const minuteText = Math.floor(remainingSeconds / 60);
   const secondText = String(remainingSeconds % 60).padStart(2, "0");
@@ -204,8 +238,12 @@ export function SessionWorkspace({ initialSession }: Props) {
   }
 
   const isMathQuestion = activeQuestion.section === "Math";
-  // Build-time: apps/web/next.config.ts maps DESMOS_API_KEY → this public env for the client bundle.
-  const desmosApiKey = process.env.NEXT_PUBLIC_DESMOS_API_KEY?.trim();
+  const desmosKeyPending = !buildDesmosKey && fetchedDesmosKey === undefined;
+  const desmosApiKey = buildDesmosKey
+    ? buildDesmosKey
+    : fetchedDesmosKey === undefined
+      ? ""
+      : (fetchedDesmosKey ?? "");
   const hasDesmosApiKey = Boolean(desmosApiKey);
 
   function updateSnapshot(
@@ -305,7 +343,7 @@ export function SessionWorkspace({ initialSession }: Props) {
     calculatorModeOptions.find((option) => option.mode === calculatorMode)?.url
     ?? calculatorModeOptions[0].url;
   const shouldUseEmbeddedGraphing =
-    calculatorMode === "graphing" && !isInteractiveGraphingReady;
+    calculatorMode === "graphing" && !isInteractiveGraphingReady && !desmosKeyPending;
 
   useEffect(() => {
     if (calculatorMode !== "graphing" || isCalculatorHidden) {
@@ -314,6 +352,11 @@ export function SessionWorkspace({ initialSession }: Props) {
       setIsInteractiveGraphingReady(false);
       setCalculatorStatusMessage(null);
       return;
+    }
+
+    if (desmosKeyPending) {
+      setCalculatorStatusMessage("Loading calculator configuration...");
+      return () => {};
     }
 
     if (!hasDesmosApiKey) {
@@ -378,7 +421,13 @@ export function SessionWorkspace({ initialSession }: Props) {
     return () => {
       isCancelled = true;
     };
-  }, [calculatorMode, desmosApiKey, hasDesmosApiKey, isCalculatorHidden]);
+  }, [
+    calculatorMode,
+    desmosApiKey,
+    hasDesmosApiKey,
+    isCalculatorHidden,
+    desmosKeyPending,
+  ]);
 
   return (
     <main style={{ margin: "0 auto", maxWidth: 1340, padding: "1.5rem 1.25rem 2.5rem" }}>
@@ -599,13 +648,19 @@ export function SessionWorkspace({ initialSession }: Props) {
 
           <div style={calculatorViewportStyle}>
             {calculatorMode === "graphing" ? (
-              shouldUseEmbeddedGraphing ? (
+              desmosKeyPending ? (
+                <div style={embeddedGraphingLayoutStyle}>
+                  <p style={calculatorStatusHintStyle}>
+                    Loading calculator configuration…
+                  </p>
+                </div>
+              ) : shouldUseEmbeddedGraphing ? (
                 <div style={embeddedGraphingLayoutStyle}>
                   <p style={calculatorStatusHintStyle}>
                     {calculatorStatusMessage
                       ?? (hasDesmosApiKey
                         ? "Using the embedded graphing calculator while the interactive tools finish loading."
-                        : "Using the embedded graphing calculator because DESMOS_API_KEY was not available at build time (add it to the deployment environment and rebuild).")}
+                        : "Using the embedded graphing calculator because no Desmos API key is configured. Add DESMOS_API_KEY to your deployment environment (e.g. Vercel project settings).")}
                   </p>
                   <div style={graphViewportShellStyle}>
                     <iframe
