@@ -25,6 +25,8 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       # AI / optional Desmos (OpenAI models default to gpt-5.4-nano in apps/web/src/server/env.ts)
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # Same secret as repo "DESMOS_API_KEY"; both names are set so next.config + /api/desmos/config see it.
+      DESMOS_API_KEY: ${{ secrets.DESMOS_API_KEY }}
       NEXT_PUBLIC_DESMOS_API_KEY: ${{ secrets.DESMOS_API_KEY }}
 
     steps:
