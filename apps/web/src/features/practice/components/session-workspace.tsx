@@ -14,7 +14,7 @@ import {
 import type { ClientSessionState } from "../server";
 
 type TutorResponse = {
-  reply: string;
+  tutorMessage: string;
 };
 
 type Props = {
@@ -128,12 +128,12 @@ const calculatorModeOptions: ReadonlyArray<{
   {
     mode: "graphing",
     label: "Graphing",
-    url: "https://www.desmos.com/calculator?embed",
+    url: "https://www.desmos.com/calculator",
   },
   {
     mode: "scientific",
     label: "Scientific",
-    url: "https://www.desmos.com/scientific?embed",
+    url: "https://www.desmos.com/scientific",
   },
 ];
 
@@ -308,23 +308,24 @@ export function SessionWorkspace({ initialSession }: Props) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            userId: snapshot.userId,
             sessionId: snapshot.sessionId,
             questionId: activeQuestion.id,
-            mode: "hint",
+            tutorMode: snapshot.tutorMode,
             message: tutorPrompt.trim(),
           }),
         });
         const payload = (await response.json()) as
           | TutorResponse
           | { error?: string };
-        if (!response.ok || !("reply" in payload)) {
+        if (!response.ok || !("tutorMessage" in payload)) {
           throw new Error(
             "error" in payload && payload.error
               ? payload.error
               : "Unable to reach tutor.",
           );
         }
-        setTutorReply(payload.reply);
+        setTutorReply(payload.tutorMessage);
       } catch (caughtError) {
         setTutorReply(
           caughtError instanceof Error ? caughtError.message : "Unable to reach tutor.",
