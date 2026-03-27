@@ -119,6 +119,19 @@ export type SessionSnapshot = {
   status: "active" | "submitted";
 };
 
+export type ClientSessionQuestion = SessionQuestion & {
+  questionId: string;
+  conceptSlug: string;
+  correctChoiceIndex: number;
+  explanation: string;
+};
+
+export type ClientSessionState = Omit<SessionSnapshot, "questionOrder"> & {
+  userId: string;
+  submittedAt: string | null;
+  questionOrder: ReadonlyArray<ClientSessionQuestion>;
+};
+
 export type SessionReview = {
   sessionId: string;
   scoreSummary: {
@@ -151,6 +164,7 @@ export type CreateSessionInput = {
 export type CreateSessionResponse = {
   sessionId: string;
   snapshot: SessionSnapshot;
+  clientSession: ClientSessionState;
 };
 
 export type SubmitAnswerInput = {
@@ -377,6 +391,30 @@ function toSessionSnapshot(session: SessionState): SessionSnapshot {
       choices: question.choices,
       selectedChoiceIndex: question.selectedChoiceIndex,
       desmosRelevant: question.desmosRelevant,
+    })),
+  };
+}
+
+function toClientSessionState(session: SessionState): ClientSessionState {
+  const snapshot = toSessionSnapshot(session);
+
+  return {
+    ...snapshot,
+    userId: session.userId,
+    submittedAt: session.submittedAt,
+    questionOrder: session.questions.map((question) => ({
+      id: question.id,
+      questionId: question.questionId,
+      section: question.section,
+      domain: question.domain,
+      concept: question.concept,
+      conceptSlug: question.conceptSlug,
+      prompt: question.prompt,
+      choices: question.choices,
+      selectedChoiceIndex: question.selectedChoiceIndex,
+      desmosRelevant: question.desmosRelevant,
+      correctChoiceIndex: question.correctChoiceIndex,
+      explanation: question.explanation,
     })),
   };
 }
@@ -621,6 +659,7 @@ export function createSession(input: CreateSessionInput): CreateSessionResponse 
   return {
     sessionId: session.sessionId,
     snapshot: toSessionSnapshot(session),
+    clientSession: toClientSessionState(session),
   };
 }
 

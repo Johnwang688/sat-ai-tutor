@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { saveStoredPracticeSession } from "../client-storage";
 import {
   DEFAULT_CONCEPT_SLUG,
+  type ClientSessionState,
   type PracticeMode,
   type SessionTypeSlug,
 } from "../server";
@@ -55,7 +57,13 @@ export function PracticeLauncherForm({ modes, concepts }: Props) {
 
         const payload = (await response.json()) as {
           sessionId: string;
+          clientSession?: ClientSessionState;
         };
+        if (!payload.clientSession) {
+          throw new Error("Session payload is incomplete.");
+        }
+
+        saveStoredPracticeSession(payload.clientSession);
         router.push(`/practice/session/${payload.sessionId}`);
       } catch (caughtError) {
         setError(

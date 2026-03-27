@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { saveStoredPracticeSession } from "../client-storage";
+import type { ClientSessionState } from "../server";
 
 type Props = {
   conceptSlug: string;
@@ -17,22 +19,22 @@ export function StartConceptDrillButton({ conceptSlug, section }: Props) {
     setError(null);
     startTransition(async () => {
       try {
-        const response = await fetch("/api/practice/generate-drill", {
+        const response = await fetch("/api/sessions/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            sessionType: "concept-drill",
             conceptSlug,
             section,
-            count: 8,
-            createSession: true,
           }),
         });
         const payload = (await response.json()) as
-          | { sessionId?: string; error?: string }
+          | { sessionId?: string; clientSession?: ClientSessionState; error?: string }
           | undefined;
-        if (!response.ok || !payload?.sessionId) {
+        if (!response.ok || !payload?.sessionId || !payload.clientSession) {
           throw new Error(payload?.error ?? "Unable to start concept drill.");
         }
+        saveStoredPracticeSession(payload.clientSession);
         router.push(`/practice/session/${payload.sessionId}`);
       } catch (caughtError) {
         setError(

@@ -4,14 +4,20 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
-import type { SessionSnapshot } from "../server";
+import {
+  buildStoredPracticeReview,
+  buildSubmittedPracticeSession,
+  saveStoredPracticeReview,
+  saveStoredPracticeSession,
+} from "../client-storage";
+import type { ClientSessionState } from "../server";
 
 type TutorResponse = {
   reply: string;
 };
 
 type Props = {
-  initialSnapshot: SessionSnapshot;
+  initialSession: ClientSessionState;
 };
 
 type CalculatorMode = "graphing" | "scientific";
@@ -60,15 +66,13 @@ const calculatorSizeOptions: ReadonlyArray<{
   },
 ];
 
-export function SessionWorkspace({ initialSnapshot }: Props) {
+export function SessionWorkspace({ initialSession }: Props) {
   const router = useRouter();
-  const [isSavePending, startSaveTransition] = useTransition();
-  const [isSubmitPending, startSubmitTransition] = useTransition();
   const [isTutorPending, startTutorTransition] = useTransition();
-  const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [snapshot, setSnapshot] = useState(initialSession);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [remainingSeconds, setRemainingSeconds] = useState(
-    initialSnapshot.remainingSeconds,
+    initialSession.remainingSeconds,
   );
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [tutorPrompt, setTutorPrompt] = useState("");
@@ -78,16 +82,21 @@ export function SessionWorkspace({ initialSnapshot }: Props) {
   const [calculatorSize, setCalculatorSize] = useState<CalculatorSize>("standard");
 
   useEffect(() => {
+    if (snapshot.status === "submitted") {
+      return undefined;
+    }
+
     const timer = window.setInterval(() => {
       setRemainingSeconds((previous) => Math.max(0, previous - 1));
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [snapshot.status]);
 
   const activeQuestion = snapshot.questionOrder[activeQuestionIndex];
   const minuteText = Math.floor(remainingSeconds / 60);
   const secondText = String(remainingSeconds % 60).padStart(2, "0");
+  const isSessionSubmitted = snapshot.status === "submitted";
 
   if (!activeQuestion) {
     return (
@@ -99,8 +108,18 @@ export function SessionWorkspace({ initialSnapshot }: Props) {
 
   const isMathQuestion = activeQuestion.section === "Math";
 
+  function updateSnapshot(
+    updater: (current: ClientSessionState) => ClientSessionState,
+  ) {
+    setSnapshot((previous) => {
+      const next = updater(previous);
+      saveStoredPracticeSession(next);
+      return next;
+    });
+  }
+
   function updateSelectedChoice(choiceIndex: number) {
-    setSnapshot((previous) => ({
+    updateSnapshot((previous) => ({
       ...previous,
       questionOrder: previous.questionOrder.map((question, index) =>
         index === activeQuestionIndex
@@ -116,60 +135,30 @@ export function SessionWorkspace({ initialSnapshot }: Props) {
       return;
     }
 
-    setStatusMessage(null);
-    startSaveTransition(async () => {
-      try {
-        const response = await fetch(
-          `/api/sessions/${snapshot.sessionId}/answer`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              questionId: activeQuestion.id,
-              choiceIndex: activeQuestion.selectedChoiceIndex,
-            }),
-          },
-        );
-        const payload = (await response.json()) as
-          | { error?: string; snapshot?: SessionSnapshot; answeredCount?: number; totalQuestions?: number }
-          | undefined;
-        if (!response.ok || !payload?.snapshot) {
-          throw new Error(payload?.error ?? "Unable to save answer.");
-        }
-        setSnapshot(payload.snapshot);
-        setStatusMessage(
-          `Saved. ${payload.answeredCount ?? 0}/${payload.totalQuestions ?? 0} answered.`,
-        );
-      } catch (caughtError) {
-        setStatusMessage(
-          caughtError instanceof Error ? caughtError.message : "Unable to save answer.",
-        );
-      }
-    });
+    const answeredCount = snapshot.questionOrder.filter(
+      (question) => question.selectedChoiceIndex !== null,
+    ).length;
+    setStatusMessage(`Saved locally. ${answeredCount}/${snapshot.questionOrder.length} answered.`);
   }
 
   function submitSession() {
+    if (isSessionSubmitted) {
+      router.push(`/review/${snapshot.sessionId}`);
+      return;
+    }
+
     setStatusMessage(null);
-    startSubmitTransition(async () => {
-      try {
-        const response = await fetch(`/api/sessions/${snapshot.sessionId}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-        const payload = (await response.json()) as
-          | { error?: string }
-          | undefined;
-        if (!response.ok) {
-          throw new Error(payload?.error ?? "Unable to submit session.");
-        }
-        router.push(`/review/${snapshot.sessionId}`);
-      } catch (caughtError) {
-        setStatusMessage(
-          caughtError instanceof Error ? caughtError.message : "Unable to submit session.",
-        );
-      }
+    const submittedSession = buildSubmittedPracticeSession({
+      ...snapshot,
+      remainingSeconds,
     });
+    const review = buildStoredPracticeReview(submittedSession);
+
+    saveStoredPracticeSession(submittedSession);
+    saveStoredPracticeReview(review);
+    setSnapshot(submittedSession);
+    setRemainingSeconds(0);
+    router.push(`/review/${snapshot.sessionId}`);
   }
 
   function sendTutorPrompt() {
@@ -277,6 +266,7 @@ export function SessionWorkspace({ initialSnapshot }: Props) {
                   name="answer"
                   value={index}
                   checked={activeQuestion.selectedChoiceIndex === index}
+                  disabled={isSessionSubmitted}
                   onChange={() => updateSelectedChoice(index)}
                 />
                 <span>{choice}</span>
@@ -285,11 +275,11 @@ export function SessionWorkspace({ initialSnapshot }: Props) {
           </fieldset>
 
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "1rem" }}>
-            <button type="button" style={primaryButtonStyle} onClick={saveAnswer} disabled={isSavePending}>
-              {isSavePending ? "Saving..." : "Save answer"}
+            <button type="button" style={primaryButtonStyle} onClick={saveAnswer} disabled={isSessionSubmitted}>
+              Save answer
             </button>
-            <button type="button" style={secondaryButtonStyle} onClick={submitSession} disabled={isSubmitPending}>
-              {isSubmitPending ? "Submitting..." : "Submit session"}
+            <button type="button" style={secondaryButtonStyle} onClick={submitSession}>
+              {isSessionSubmitted ? "Open review" : "Submit session"}
             </button>
             <Link href={`/review/${snapshot.sessionId}`} style={linkButtonStyle}>
               Open review
