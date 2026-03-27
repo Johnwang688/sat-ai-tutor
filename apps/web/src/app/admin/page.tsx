@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { theme } from "@/theme/app-theme";
 import {
   AdminMetricCard,
   AdminShell,
@@ -78,10 +79,10 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: "1.1rem",
   },
   auditPanel: {
-    border: "1px solid #dbe7ef",
+    border: `1px solid ${theme.border}`,
     borderRadius: "12px",
     padding: "1rem",
-    background: "#f8fafc",
+    background: theme.surface,
   },
   sectionTitle: {
     marginTop: 0,

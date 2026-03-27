@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { theme } from "../theme/app-theme";
 
 type RouteScreenProps = {
   eyebrow?: string;
@@ -59,9 +60,9 @@ const heroStyle: CSSProperties = {
   gap: "12px",
   padding: "24px",
   borderRadius: "16px",
-  border: "1px solid #d7dde7",
+  border: `1px solid ${theme.border}`,
   background:
-    "linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(245,248,252,1) 100%)",
+    "linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(250,245,255,0.85) 100%)",
 };
 
 const eyebrowStyle: CSSProperties = {
@@ -70,14 +71,14 @@ const eyebrowStyle: CSSProperties = {
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   fontWeight: "600",
-  color: "#3d4b66",
+  color: theme.accent,
 };
 
 const titleStyle: CSSProperties = {
   margin: "0",
   fontSize: "clamp(1.8rem, 2.5vw, 2.4rem)",
   lineHeight: "1.1",
-  color: "#0f172a",
+  color: theme.text,
 };
 
 const summaryStyle: CSSProperties = {
@@ -93,14 +94,14 @@ const detailsStyle: CSSProperties = {
   gap: "20px",
   padding: "24px",
   borderRadius: "16px",
-  border: "1px solid #d7dde7",
-  backgroundColor: "#ffffff",
+  border: `1px solid ${theme.border}`,
+  backgroundColor: theme.surface,
 };
 
 const headingStyle: CSSProperties = {
   margin: "0 0 10px",
   fontSize: "1rem",
-  color: "#0f172a",
+  color: theme.text,
 };
 
 const fileListStyle: CSSProperties = {

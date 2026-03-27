@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { theme } from "../theme/app-theme";
 
 const valuePoints = [
   {
@@ -19,7 +20,14 @@ export default function HomePage() {
   return (
     <main style={{ margin: "0 auto", maxWidth: 1040, padding: "3rem 1.5rem 4rem" }}>
       <section style={{ marginBottom: "2.5rem" }}>
-        <p style={{ fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <p
+          style={{
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: theme.accent,
+          }}
+        >
           SAT Prep Platform
         </p>
         <h1 style={{ fontSize: "2.25rem", lineHeight: 1.15, marginBottom: "0.75rem" }}>
@@ -58,10 +66,10 @@ export default function HomePage() {
           <article
             key={point.title}
             style={{
-              border: "1px solid #d7dce5",
+              border: `1px solid ${theme.border}`,
               borderRadius: 12,
               padding: "1rem",
-              backgroundColor: "#f8fafc",
+              backgroundColor: theme.surface,
             }}
           >
             <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.1rem" }}>{point.title}</h2>
@@ -70,7 +78,7 @@ export default function HomePage() {
         ))}
       </section>
 
-      <section style={{ borderTop: "1px solid #e5eaf3", paddingTop: "1rem" }}>
+      <section style={{ borderTop: `1px solid ${theme.border}`, paddingTop: "1rem" }}>
         <p style={{ margin: 0, lineHeight: 1.45 }}>
           Built for SAT-aligned practice. This app is not affiliated with or endorsed by the College Board.
         </p>
@@ -81,9 +89,9 @@ export default function HomePage() {
 
 const buttonPrimaryStyle = {
   display: "inline-block",
-  backgroundColor: "#0f172a",
+  backgroundColor: theme.accent,
   borderRadius: 10,
-  color: "#ffffff",
+  color: theme.accentForeground,
   fontWeight: 600,
   padding: "0.65rem 1rem",
   textDecoration: "none",
@@ -91,9 +99,10 @@ const buttonPrimaryStyle = {
 
 const buttonSecondaryStyle = {
   display: "inline-block",
-  backgroundColor: "#e2e8f0",
+  backgroundColor: theme.surface,
+  border: `1px solid ${theme.border}`,
   borderRadius: 10,
-  color: "#0f172a",
+  color: theme.text,
   fontWeight: 600,
   padding: "0.65rem 1rem",
   textDecoration: "none",

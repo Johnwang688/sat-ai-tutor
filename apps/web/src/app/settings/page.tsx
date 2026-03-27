@@ -1,4 +1,5 @@
 import { sectionProgress } from "../../features/progress/mock-progress";
+import { theme } from "../../theme/app-theme";
 
 export default function SettingsPage() {
   return (
@@ -57,10 +58,10 @@ export default function SettingsPage() {
 }
 
 const panelStyle = {
-  border: "1px solid #d7dce5",
+  border: `1px solid ${theme.border}`,
   borderRadius: 12,
   padding: "1rem",
-  backgroundColor: "#ffffff",
+  backgroundColor: theme.surface,
 } as const;
 
 const labelStyle = {
@@ -79,8 +80,8 @@ const inputStyle = {
 const primaryButtonStyle = {
   border: "none",
   borderRadius: 8,
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   padding: "0.6rem 0.75rem",
   fontWeight: 600,
   width: "fit-content",

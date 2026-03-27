@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import type { CSSProperties } from "react";
+import { theme } from "@/theme/app-theme";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
 import { assertAdminFromServerContext } from "@/features/admin/server/auth";
 import { getPracticeConceptOptions } from "@/features/practice/server";
@@ -239,8 +240,8 @@ const styles: Record<string, CSSProperties> = {
     border: "1px solid #cbd5e1",
     borderRadius: "8px",
     padding: "0.55rem 0.65rem",
-    background: "#f8fafc",
-    color: "#0f172a",
+    background: theme.surfaceMuted,
+    color: theme.text,
   },
   checkboxField: {
     display: "flex",
@@ -254,8 +255,8 @@ const styles: Record<string, CSSProperties> = {
     border: "1px solid #cbd5e1",
     borderRadius: "8px",
     padding: "0.55rem 0.65rem",
-    background: "#f8fafc",
-    color: "#0f172a",
+    background: theme.surfaceMuted,
+    color: theme.text,
     resize: "vertical",
   },
   table: {
@@ -297,19 +298,19 @@ const styles: Record<string, CSSProperties> = {
     padding: "0.3rem 0.4rem",
   },
   primaryButton: {
-    border: "1px solid #0f172a",
+    border: `1px solid ${theme.accent}`,
     borderRadius: "8px",
-    background: "#0f172a",
-    color: "#ffffff",
+    background: theme.accent,
+    color: theme.accentForeground,
     fontWeight: 600,
     padding: "0.4rem 0.75rem",
     cursor: "pointer",
   },
   secondaryButton: {
-    border: "1px solid #94a3b8",
+    border: `1px solid ${theme.borderStrong}`,
     borderRadius: "8px",
-    background: "#f8fafc",
-    color: "#0f172a",
+    background: theme.surfaceMuted,
+    color: theme.text,
     fontWeight: 600,
     padding: "0.4rem 0.75rem",
     cursor: "pointer",

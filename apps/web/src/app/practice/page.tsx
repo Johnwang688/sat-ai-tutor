@@ -1,4 +1,5 @@
 import { PracticeLauncherForm } from "../../features/practice/components/practice-launcher-form";
+import { theme } from "../../theme/app-theme";
 import {
   getPracticeConceptOptions,
   getPracticeModeList,
@@ -49,10 +50,10 @@ const modeGridStyle = {
 } as const;
 
 const modeCardStyle = {
-  border: "1px solid #d7dce5",
+  border: `1px solid ${theme.border}`,
   borderRadius: 12,
   padding: "0.9rem",
-  backgroundColor: "#f8fafc",
+  backgroundColor: theme.surface,
 } as const;
 
 const smallTextStyle = {
@@ -60,7 +61,8 @@ const smallTextStyle = {
 } as const;
 
 const formPanelStyle = {
-  border: "1px solid #d7dce5",
+  border: `1px solid ${theme.border}`,
   borderRadius: 12,
   padding: "1rem",
+  backgroundColor: theme.surface,
 } as const;

@@ -1,0 +1,7 @@
+/* Align default anchors with app purple accent (inline-styled UI stays source of truth). */
+a {
+  color: #6d28d9;
+}
+a:hover {
+  color: #5b21b6;
+}

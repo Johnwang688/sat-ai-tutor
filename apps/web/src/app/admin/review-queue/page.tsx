@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import type { CSSProperties } from "react";
+import { theme } from "@/theme/app-theme";
 import { AdminShell } from "../../../features/admin/components/admin-shell";
 import { assertAdminFromServerContext } from "@/features/admin/server/auth";
 import {
@@ -235,9 +236,9 @@ const styles: Record<string, CSSProperties> = {
     minWidth: "180px",
   },
   primaryButton: {
-    border: "1px solid #0f172a",
-    color: "#ffffff",
-    background: "#0f172a",
+    border: `1px solid ${theme.accent}`,
+    color: theme.accentForeground,
+    background: theme.accent,
     borderRadius: "8px",
     padding: "0.4rem 0.75rem",
     fontWeight: 600,

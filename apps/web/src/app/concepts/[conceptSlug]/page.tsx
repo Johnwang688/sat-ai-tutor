@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StartConceptDrillButton } from "../../../features/practice/components/start-concept-drill-button";
+import { theme } from "../../../theme/app-theme";
 import {
   DEFAULT_PRACTICE_USER_ID,
   hasPracticeQuestionsForConcept,
@@ -24,7 +25,7 @@ export default async function ConceptDetailPage({ params }: ConceptDetailPagePro
   return (
     <main style={{ margin: "0 auto", maxWidth: 980, padding: "2rem 1.25rem 3rem" }}>
       <header style={{ marginBottom: "1.25rem" }}>
-        <p style={{ margin: "0 0 0.35rem" }}>
+        <p style={{ margin: "0 0 0.35rem", color: theme.accent, fontWeight: 600 }}>
           {concept.section} | {concept.domain}
         </p>
         <h1 style={{ marginBottom: "0.35rem" }}>{concept.name}</h1>
@@ -77,10 +78,10 @@ export default async function ConceptDetailPage({ params }: ConceptDetailPagePro
 }
 
 const panelStyle = {
-  border: "1px solid #d7dce5",
+  border: `1px solid ${theme.border}`,
   borderRadius: 12,
   padding: "1rem",
-  backgroundColor: "#f8fafc",
+  backgroundColor: theme.surface,
 } as const;
 
 const listStyle = {
@@ -95,6 +96,7 @@ const secondaryButtonStyle = {
   padding: "0.55rem 0.8rem",
   textDecoration: "none",
   fontWeight: 600,
-  border: "1px solid #94a3b8",
-  color: "#0f172a",
+  border: `1px solid ${theme.borderStrong}`,
+  backgroundColor: theme.surface,
+  color: theme.text,
 } as const;

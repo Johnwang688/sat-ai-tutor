@@ -1,4 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
+import "./globals.css";
+import { theme } from "../theme/app-theme";
 
 type RootLayoutProps = {
   children: ReactNode;
@@ -25,9 +27,8 @@ const bodyStyle: CSSProperties = {
   margin: "0",
   minHeight: "100vh",
   position: "relative",
-  background:
-    "radial-gradient(circle at 15% 10%, rgba(30, 64, 175, 0.12), transparent 40%), radial-gradient(circle at 90% 0%, rgba(14, 116, 144, 0.12), transparent 35%), #f3f6fb",
-  color: "#0f172a",
+  background: theme.bgBody,
+  color: theme.text,
   fontFamily:
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
 };
@@ -41,6 +42,5 @@ const backgroundGlowStyle: CSSProperties = {
   position: "absolute",
   inset: "0",
   pointerEvents: "none",
-  background:
-    "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.25) 100%)",
+  background: theme.bgVeil,
 };

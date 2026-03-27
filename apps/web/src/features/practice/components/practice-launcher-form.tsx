@@ -9,6 +9,7 @@ import {
   type PracticeMode,
   type SessionTypeSlug,
 } from "../server";
+import { theme } from "../../../theme/app-theme";
 
 type ConceptOption = {
   slug: string;
@@ -136,7 +137,7 @@ export function PracticeLauncherForm({ modes, concepts }: Props) {
 }
 
 const fieldSetStyle = {
-  border: "1px solid #e2e8f0",
+  border: `1px solid ${theme.border}`,
   borderRadius: 10,
   padding: "0.6rem 0.75rem",
   marginBottom: "0.8rem",
@@ -168,8 +169,8 @@ const inputStyle = {
 const startButtonStyle = {
   marginTop: "1rem",
   display: "inline-block",
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   borderRadius: 8,
   border: "none",
   padding: "0.6rem 0.85rem",

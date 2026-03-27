@@ -9,6 +9,7 @@ import {
   resolvePostAuthPath,
   signUpAndBootstrapProfile,
 } from "../../features/auth/server";
+import { theme } from "../../theme/app-theme";
 
 type SignupPageProps = {
   searchParams?: Promise<{
@@ -181,8 +182,8 @@ const buttonStyle = {
   width: "100%",
   borderRadius: 8,
   border: "none",
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   padding: "0.65rem 0.75rem",
   fontWeight: 600,
 } as const;

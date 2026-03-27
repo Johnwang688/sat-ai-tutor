@@ -9,6 +9,7 @@ import {
   resolvePostAuthPath,
   signInWithPassword,
 } from "../../features/auth/server";
+import { theme } from "../../theme/app-theme";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -152,8 +153,8 @@ const primaryButtonStyle = {
   width: "100%",
   borderRadius: 8,
   border: "none",
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   padding: "0.65rem 0.75rem",
   fontWeight: 600,
 } as const;
@@ -162,9 +163,9 @@ const secondaryButtonStyle = {
   marginTop: "0.65rem",
   width: "100%",
   borderRadius: 8,
-  border: "1px solid #94a3b8",
-  backgroundColor: "#f8fafc",
-  color: "#0f172a",
+  border: `1px solid ${theme.borderStrong}`,
+  backgroundColor: theme.surface,
+  color: theme.text,
   padding: "0.65rem 0.75rem",
   fontWeight: 600,
   opacity: 0.7,

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
+import { theme } from "../../../theme/app-theme";
 import {
   buildStoredPracticeReview,
   buildSubmittedPracticeSession,
@@ -707,7 +708,7 @@ const headerStyle = {
 
 const timerStyle = {
   fontWeight: 700,
-  border: "1px solid #334155",
+  border: `1px solid ${theme.borderStrong}`,
   borderRadius: 999,
   padding: "0.35rem 0.75rem",
 } as const;
@@ -717,10 +718,10 @@ const sessionGridStyle = {
 } as const;
 
 const panelStyle = {
-  border: "1px solid #d7dce5",
+  border: `1px solid ${theme.border}`,
   borderRadius: 12,
   padding: "1rem",
-  backgroundColor: "#ffffff",
+  backgroundColor: theme.surface,
 } as const;
 
 const questionPanelStyle = {
@@ -729,11 +730,11 @@ const questionPanelStyle = {
 } as const;
 
 const questionPromptCardStyle = {
-  border: "1px solid #dbe4f0",
+  border: `1px solid ${theme.accentBorder}`,
   borderRadius: 16,
   padding: "1.1rem 1.15rem",
   marginBottom: "1rem",
-  backgroundColor: "#f8fbff",
+  backgroundColor: theme.accentSoft,
 } as const;
 
 const questionPromptTextStyle = {
@@ -753,16 +754,16 @@ const pillStyle = {
 
 const activePillStyle = {
   ...pillStyle,
-  border: "1px solid #0f172a",
-  backgroundColor: "#e2e8f0",
+  border: `1px solid ${theme.accent}`,
+  backgroundColor: theme.accentSoft2,
   fontWeight: 700,
 } as const;
 
 const fieldSetStyle = {
-  border: "1px solid #e2e8f0",
+  border: `1px solid ${theme.border}`,
   borderRadius: 14,
   padding: "0.9rem 1rem",
-  backgroundColor: "#ffffff",
+  backgroundColor: theme.surface,
 } as const;
 
 const choiceStyle = {
@@ -794,39 +795,39 @@ const autoSaveCaptionStyle = {
 
 const mathHelperNoteStyle = {
   marginTop: "1.1rem",
-  border: "1px solid #dbe4f0",
+  border: `1px solid ${theme.accentBorder}`,
   borderRadius: 14,
   padding: "0.95rem 1rem",
-  backgroundColor: "#f8fbff",
+  backgroundColor: theme.accentSoft,
 } as const;
 
 const primaryButtonStyle = {
   border: "none",
   borderRadius: 8,
   padding: "0.55rem 0.8rem",
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   fontWeight: 600,
   cursor: "pointer",
 } as const;
 
 const secondaryButtonStyle = {
-  border: "1px solid #94a3b8",
+  border: `1px solid ${theme.borderStrong}`,
   borderRadius: 8,
   padding: "0.55rem 0.8rem",
-  backgroundColor: "#f8fafc",
-  color: "#0f172a",
+  backgroundColor: theme.surfaceMuted,
+  color: theme.text,
   fontWeight: 600,
   cursor: "pointer",
 } as const;
 
 const linkButtonStyle = {
   display: "inline-block",
-  border: "1px solid #94a3b8",
+  border: `1px solid ${theme.borderStrong}`,
   borderRadius: 8,
   padding: "0.55rem 0.8rem",
   textDecoration: "none",
-  color: "#0f172a",
+  color: theme.text,
   fontWeight: 600,
 } as const;
 
@@ -837,11 +838,11 @@ const calculatorLauncherRowStyle: CSSProperties = {
 };
 
 const calculatorLauncherButtonStyle: CSSProperties = {
-  border: "1px solid #0f172a",
+  border: `1px solid ${theme.accent}`,
   borderRadius: 999,
   padding: "0.45rem 0.85rem",
-  backgroundColor: "#eff6ff",
-  color: "#0f172a",
+  backgroundColor: theme.accentSoft,
+  color: theme.text,
   fontWeight: 700,
   cursor: "pointer",
 };
@@ -856,7 +857,7 @@ const calculatorWindowStyle: CSSProperties = {
   border: "1px solid #cbd5e1",
   borderRadius: 18,
   backgroundColor: "#ffffff",
-  boxShadow: "0 24px 80px rgba(15, 23, 42, 0.18)",
+  boxShadow: theme.shadowModal,
   overflow: "hidden",
 };
 
@@ -877,11 +878,11 @@ const calculatorWindowCaptionStyle: CSSProperties = {
 };
 
 const calculatorHideButtonStyle: CSSProperties = {
-  border: "1px solid #94a3b8",
+  border: `1px solid ${theme.borderStrong}`,
   borderRadius: 999,
   padding: "0.4rem 0.8rem",
-  backgroundColor: "#ffffff",
-  color: "#0f172a",
+  backgroundColor: theme.surface,
+  color: theme.text,
   fontWeight: 600,
   cursor: "pointer",
 };
@@ -914,9 +915,9 @@ const calculatorChipStyle: CSSProperties = {
 
 const activeCalculatorChipStyle: CSSProperties = {
   ...calculatorChipStyle,
-  border: "1px solid #0f172a",
-  backgroundColor: "#dbeafe",
-  color: "#0f172a",
+  border: `1px solid ${theme.accent}`,
+  backgroundColor: theme.accentSoft2,
+  color: theme.text,
 };
 
 const calculatorViewportStyle: CSSProperties = {
@@ -994,7 +995,7 @@ const tutorWindowStyle: CSSProperties = {
   border: "1px solid #cbd5e1",
   borderRadius: 20,
   backgroundColor: "#ffffff",
-  boxShadow: "0 24px 80px rgba(15, 23, 42, 0.2)",
+  boxShadow: theme.shadowModal,
   overflow: "hidden",
 };
 
@@ -1069,9 +1070,9 @@ const tutorLauncherStyle: CSSProperties = {
   border: "none",
   borderRadius: 999,
   padding: "0.85rem 1.15rem",
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   fontWeight: 700,
-  boxShadow: "0 18px 40px rgba(15, 23, 42, 0.22)",
+  boxShadow: theme.shadowFloating,
   cursor: "pointer",
 };

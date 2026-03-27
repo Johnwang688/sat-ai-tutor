@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import { theme } from "@/theme/app-theme";
 
 type AdminShellProps = {
   title: string;
@@ -75,7 +76,7 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: "1.5rem",
   },
   eyebrow: {
-    color: "#0f766e",
+    color: theme.accent,
     fontWeight: 700,
     letterSpacing: "0.04em",
     marginBottom: "0.5rem",
@@ -93,8 +94,8 @@ const styles: Record<string, CSSProperties> = {
     color: "#475569",
   },
   metricCard: {
-    background: "#ffffff",
-    border: "1px solid #dbe7ef",
+    background: theme.surface,
+    border: `1px solid ${theme.border}`,
     borderRadius: "12px",
     padding: "1rem",
   },
@@ -108,7 +109,7 @@ const styles: Record<string, CSSProperties> = {
     margin: "0.35rem 0",
     fontSize: "1.7rem",
     fontWeight: 800,
-    color: "#0f172a",
+    color: theme.text,
   },
   metricDetail: {
     margin: 0,
@@ -117,12 +118,12 @@ const styles: Record<string, CSSProperties> = {
   },
   actionLink: {
     display: "block",
-    border: "1px solid #dbe7ef",
+    border: `1px solid ${theme.border}`,
     borderRadius: "12px",
     padding: "1rem",
     textDecoration: "none",
     color: "inherit",
-    background: "#ffffff",
+    background: theme.surface,
   },
   actionTitle: {
     margin: 0,

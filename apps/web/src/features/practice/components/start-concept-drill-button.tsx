@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveStoredPracticeSession } from "../client-storage";
 import type { ClientSessionState } from "../server";
+import { theme } from "../../../theme/app-theme";
 
 type Props = {
   conceptSlug: string;
@@ -67,8 +68,8 @@ const primaryButtonStyle = {
   padding: "0.55rem 0.8rem",
   textDecoration: "none",
   fontWeight: 600,
-  backgroundColor: "#0f172a",
-  color: "#ffffff",
+  backgroundColor: theme.accent,
+  color: theme.accentForeground,
   border: "none",
   cursor: "pointer",
 } as const;

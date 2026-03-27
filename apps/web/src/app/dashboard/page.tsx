@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { theme } from "../../theme/app-theme";
 import { parseAuthSessionFromCookies } from "../../features/auth/server";
 import { DEFAULT_PRACTICE_USER_ID } from "../../features/practice/server";
 import { getProgressOverview } from "../../features/progress/server";
@@ -96,17 +97,17 @@ const cardGridStyle = {
 } as const;
 
 const cardStyle = {
-  border: "1px solid #d7dce5",
+  border: `1px solid ${theme.border}`,
   borderRadius: 12,
   padding: "0.9rem",
-  backgroundColor: "#f8fafc",
+  backgroundColor: theme.surface,
 } as const;
 
 const highlightCardStyle = {
-  border: "1px solid #cbd5e1",
+  border: `1px solid ${theme.accentBorder}`,
   borderRadius: 12,
   padding: "1rem",
-  backgroundColor: "#eef2ff",
+  backgroundColor: theme.accentSoft,
 } as const;
 
 const metricTextStyle = {
