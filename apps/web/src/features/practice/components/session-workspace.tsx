@@ -22,7 +22,7 @@ type Props = {
 
 type CalculatorMode = "graphing" | "scientific";
 type CalculatorSize = "compact" | "standard" | "expanded";
-type CalculatorExpression = {
+type SeededExpression = {
   id: string;
   latex: string;
 };
@@ -66,7 +66,7 @@ const DEFAULT_GRAPH_BOUNDS: DesmosMathBounds = {
   bottom: -10,
   top: 10,
 };
-const DEFAULT_GRAPH_EXPRESSIONS: ReadonlyArray<CalculatorExpression> = [
+const DEFAULT_GRAPH_EXPRESSIONS: ReadonlyArray<SeededExpression> = [
   { id: "expression-1", latex: "y=x" },
 ];
 
@@ -171,16 +171,12 @@ export function SessionWorkspace({ initialSession }: Props) {
   const [isCalculatorHidden, setIsCalculatorHidden] = useState(true);
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>("graphing");
   const [calculatorSize, setCalculatorSize] = useState<CalculatorSize>("standard");
-  const [graphExpressions, setGraphExpressions] = useState<ReadonlyArray<CalculatorExpression>>(
-    DEFAULT_GRAPH_EXPRESSIONS,
-  );
   const [calculatorStatusMessage, setCalculatorStatusMessage] = useState<string | null>(
     null,
   );
   const [isInteractiveGraphingReady, setIsInteractiveGraphingReady] = useState(false);
   const graphContainerRef = useRef<HTMLDivElement | null>(null);
   const graphingCalculatorRef = useRef<DesmosGraphingCalculator | null>(null);
-  const syncedExpressionIdsRef = useRef<ReadonlyArray<string>>([]);
 
   useEffect(() => {
     if (snapshot.status === "submitted") {
@@ -208,7 +204,8 @@ export function SessionWorkspace({ initialSession }: Props) {
   }
 
   const isMathQuestion = activeQuestion.section === "Math";
-  const desmosApiKey = process.env.DESMOS_API_KEY?.trim();
+  // Build-time: apps/web/next.config.ts maps DESMOS_API_KEY → this public env for the client bundle.
+  const desmosApiKey = process.env.NEXT_PUBLIC_DESMOS_API_KEY?.trim();
   const hasDesmosApiKey = Boolean(desmosApiKey);
 
   function updateSnapshot(
@@ -297,54 +294,6 @@ export function SessionWorkspace({ initialSession }: Props) {
     setIsCalculatorHidden(false);
   }
 
-  function updateGraphExpression(expressionId: string, latex: string) {
-    setGraphExpressions((previous) =>
-      previous.map((expression) =>
-        expression.id === expressionId ? { ...expression, latex } : expression,
-      ),
-    );
-  }
-
-  function addGraphExpression() {
-    setGraphExpressions((previous) => [
-      ...previous,
-      {
-        id: `expression-${previous.length + 1}-${Date.now().toString(36)}`,
-        latex: "",
-      },
-    ]);
-  }
-
-  function removeGraphExpression(expressionId: string) {
-    setGraphExpressions((previous) => {
-      if (previous.length === 1) {
-        return [{ ...previous[0], latex: "" }];
-      }
-
-      return previous.filter((expression) => expression.id !== expressionId);
-    });
-  }
-
-  function zoomGraph(scaleFactor: number) {
-    const calculator = graphingCalculatorRef.current;
-    const bounds = calculator?.getMathBounds?.();
-    if (!calculator?.setMathBounds || !bounds) {
-      return;
-    }
-
-    const centerX = (bounds.left + bounds.right) / 2;
-    const centerY = (bounds.top + bounds.bottom) / 2;
-    const halfWidth = ((bounds.right - bounds.left) / 2) * scaleFactor;
-    const halfHeight = ((bounds.top - bounds.bottom) / 2) * scaleFactor;
-
-    calculator.setMathBounds({
-      left: centerX - halfWidth,
-      right: centerX + halfWidth,
-      bottom: centerY - halfHeight,
-      top: centerY + halfHeight,
-    });
-  }
-
   function resetGraphView() {
     graphingCalculatorRef.current?.setMathBounds?.(DEFAULT_GRAPH_BOUNDS);
   }
@@ -362,7 +311,6 @@ export function SessionWorkspace({ initialSession }: Props) {
     if (calculatorMode !== "graphing" || isCalculatorHidden) {
       graphingCalculatorRef.current?.destroy();
       graphingCalculatorRef.current = null;
-      syncedExpressionIdsRef.current = [];
       setIsInteractiveGraphingReady(false);
       setCalculatorStatusMessage(null);
       return;
@@ -371,7 +319,6 @@ export function SessionWorkspace({ initialSession }: Props) {
     if (!hasDesmosApiKey) {
       graphingCalculatorRef.current?.destroy();
       graphingCalculatorRef.current = null;
-      syncedExpressionIdsRef.current = [];
       setIsInteractiveGraphingReady(false);
       setCalculatorStatusMessage(null);
       return;
@@ -394,13 +341,21 @@ export function SessionWorkspace({ initialSession }: Props) {
           graphingCalculatorRef.current
           ?? window.Desmos.GraphingCalculator(graphContainerRef.current, {
             keypad: true,
-            expressions: false,
-            settingsMenu: false,
-            expressionsTopbar: false,
-            zoomButtons: false,
+            expressions: true,
+            settingsMenu: true,
+            expressionsTopbar: true,
+            zoomButtons: true,
           });
         graphingCalculatorRef.current = calculator;
         calculator.setMathBounds?.(DEFAULT_GRAPH_BOUNDS);
+        for (const expression of DEFAULT_GRAPH_EXPRESSIONS) {
+          if (expression.latex.trim()) {
+            calculator.setExpression({
+              id: expression.id,
+              latex: expression.latex,
+            });
+          }
+        }
         calculator.resize();
         setIsInteractiveGraphingReady(true);
         setCalculatorStatusMessage(null);
@@ -412,7 +367,6 @@ export function SessionWorkspace({ initialSession }: Props) {
 
         graphingCalculatorRef.current?.destroy();
         graphingCalculatorRef.current = null;
-        syncedExpressionIdsRef.current = [];
         setIsInteractiveGraphingReady(false);
         setCalculatorStatusMessage(
           error instanceof Error
@@ -425,36 +379,6 @@ export function SessionWorkspace({ initialSession }: Props) {
       isCancelled = true;
     };
   }, [calculatorMode, desmosApiKey, hasDesmosApiKey, isCalculatorHidden]);
-
-  useEffect(() => {
-    const calculator = graphingCalculatorRef.current;
-    if (!calculator) {
-      return;
-    }
-
-    const currentIds = graphExpressions.map((expression) => expression.id);
-    const removedIds = syncedExpressionIdsRef.current.filter(
-      (expressionId) => !currentIds.includes(expressionId),
-    );
-
-    for (const expressionId of removedIds) {
-      calculator.removeExpression({ id: expressionId });
-    }
-
-    for (const expression of graphExpressions) {
-      if (expression.latex.trim()) {
-        calculator.setExpression({
-          id: expression.id,
-          latex: expression.latex,
-        });
-      } else {
-        calculator.removeExpression({ id: expression.id });
-      }
-    }
-
-    syncedExpressionIdsRef.current = currentIds;
-    calculator.resize();
-  }, [graphExpressions]);
 
   return (
     <main style={{ margin: "0 auto", maxWidth: 1340, padding: "1.5rem 1.25rem 2.5rem" }}>
@@ -648,12 +572,6 @@ export function SessionWorkspace({ initialSession }: Props) {
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
               {calculatorMode === "graphing" && !shouldUseEmbeddedGraphing ? (
                 <div style={calculatorChipGroupStyle}>
-                  <button type="button" style={calculatorChipStyle} onClick={() => zoomGraph(0.8)}>
-                    Zoom in
-                  </button>
-                  <button type="button" style={calculatorChipStyle} onClick={() => zoomGraph(1.25)}>
-                    Zoom out
-                  </button>
                   <button type="button" style={calculatorChipStyle} onClick={resetGraphView}>
                     Reset view
                   </button>
@@ -687,7 +605,7 @@ export function SessionWorkspace({ initialSession }: Props) {
                     {calculatorStatusMessage
                       ?? (hasDesmosApiKey
                         ? "Using the embedded graphing calculator while the interactive tools finish loading."
-                        : "Using the embedded graphing calculator because no Desmos API key is configured for this environment.")}
+                        : "Using the embedded graphing calculator because DESMOS_API_KEY was not available at build time (add it to the deployment environment and rebuild).")}
                   </p>
                   <div style={graphViewportShellStyle}>
                     <iframe
@@ -699,57 +617,10 @@ export function SessionWorkspace({ initialSession }: Props) {
                   </div>
                 </div>
               ) : (
-                <div style={graphingCalculatorLayoutStyle}>
-                  <section style={graphExpressionPanelStyle}>
-                    <div style={graphExpressionHeaderStyle}>
-                      <div>
-                        <strong>Equations</strong>
-                        <p style={graphExpressionCaptionStyle}>
-                          Type one expression per row. Example: `y=x^2-4` or `x=3`.
-                        </p>
-                      </div>
-                      <button type="button" style={calculatorChipStyle} onClick={addGraphExpression}>
-                        Add equation
-                      </button>
-                    </div>
-
-                    <div style={graphExpressionListStyle}>
-                      {graphExpressions.map((expression, index) => (
-                        <div key={expression.id} style={graphExpressionRowStyle}>
-                          <label style={graphExpressionLabelStyle} htmlFor={expression.id}>
-                            y{index + 1}
-                          </label>
-                          <input
-                            id={expression.id}
-                            type="text"
-                            value={expression.latex}
-                            onChange={(event) =>
-                              updateGraphExpression(expression.id, event.target.value)
-                            }
-                            placeholder="Enter an equation"
-                            style={graphExpressionInputStyle}
-                          />
-                          <button
-                            type="button"
-                            style={graphExpressionRemoveButtonStyle}
-                            onClick={() => removeGraphExpression(expression.id)}
-                            aria-label={`Remove equation ${index + 1}`}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    {calculatorStatusMessage ? (
-                      <p style={calculatorStatusStyle}>{calculatorStatusMessage}</p>
-                    ) : (
-                      <p style={calculatorStatusHintStyle}>
-                        Pan directly on the graph, scroll to zoom, or use the quick zoom buttons above.
-                      </p>
-                    )}
-                  </section>
-
+                <div style={desmosNativeGraphingLayoutStyle}>
+                  {calculatorStatusMessage ? (
+                    <p style={calculatorStatusStyle}>{calculatorStatusMessage}</p>
+                  ) : null}
                   <div style={graphViewportShellStyle}>
                     <div ref={graphContainerRef} style={graphViewportStyle} />
                   </div>
@@ -923,7 +794,7 @@ const calculatorLauncherButtonStyle: CSSProperties = {
 const calculatorWindowStyle: CSSProperties = {
   position: "fixed",
   top: "1rem",
-  right: "1rem",
+  left: "1rem",
   zIndex: 40,
   display: "flex",
   flexDirection: "column",
@@ -999,12 +870,14 @@ const calculatorViewportStyle: CSSProperties = {
   backgroundColor: "#ffffff",
 };
 
-const graphingCalculatorLayoutStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(260px, 320px) minmax(0, 1fr)",
-  gap: "0.75rem",
+const desmosNativeGraphingLayoutStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.5rem",
   height: "100%",
-  padding: "0.75rem",
+  minHeight: 0,
+  padding: "0.5rem",
+  boxSizing: "border-box",
 };
 
 const embeddedGraphingLayoutStyle: CSSProperties = {
@@ -1013,71 +886,6 @@ const embeddedGraphingLayoutStyle: CSSProperties = {
   gap: "0.75rem",
   height: "100%",
   padding: "0.75rem",
-};
-
-const graphExpressionPanelStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.75rem",
-  minHeight: 0,
-  border: "1px solid #e2e8f0",
-  borderRadius: 14,
-  backgroundColor: "#f8fafc",
-  padding: "0.85rem",
-};
-
-const graphExpressionHeaderStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: "0.75rem",
-  flexWrap: "wrap",
-};
-
-const graphExpressionCaptionStyle: CSSProperties = {
-  margin: "0.2rem 0 0",
-  color: "#475569",
-  fontSize: "0.9rem",
-  lineHeight: 1.45,
-};
-
-const graphExpressionListStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.65rem",
-  overflowY: "auto",
-};
-
-const graphExpressionRowStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "48px minmax(0, 1fr)",
-  gap: "0.5rem",
-  alignItems: "center",
-};
-
-const graphExpressionLabelStyle: CSSProperties = {
-  fontWeight: 700,
-  color: "#0f172a",
-};
-
-const graphExpressionInputStyle: CSSProperties = {
-  width: "100%",
-  border: "1px solid #cbd5e1",
-  borderRadius: 10,
-  padding: "0.6rem 0.75rem",
-  fontSize: "0.98rem",
-};
-
-const graphExpressionRemoveButtonStyle: CSSProperties = {
-  gridColumn: "2 / 3",
-  justifySelf: "flex-start",
-  border: "1px solid #cbd5e1",
-  borderRadius: 999,
-  padding: "0.35rem 0.7rem",
-  backgroundColor: "#ffffff",
-  color: "#475569",
-  fontWeight: 600,
-  cursor: "pointer",
 };
 
 const calculatorStatusStyle: CSSProperties = {
@@ -1093,18 +901,21 @@ const calculatorStatusHintStyle: CSSProperties = {
 };
 
 const graphViewportShellStyle: CSSProperties = {
+  flex: 1,
   minWidth: 0,
   minHeight: 0,
   border: "1px solid #e2e8f0",
   borderRadius: 14,
   overflow: "hidden",
   backgroundColor: "#ffffff",
+  display: "flex",
+  flexDirection: "column",
 };
 
 const graphViewportStyle: CSSProperties = {
+  flex: 1,
   width: "100%",
-  height: "100%",
-  minHeight: 360,
+  minHeight: 280,
   backgroundColor: "#ffffff",
 };
 
