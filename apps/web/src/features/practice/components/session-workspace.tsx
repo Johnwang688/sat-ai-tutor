@@ -87,6 +87,13 @@ function ensureDesmosScript(apiKey: string): Promise<void> {
   }
 
   desmosScriptPromise = new Promise<void>((resolve, reject) => {
+    const fail = (error: Error) => {
+      desmosScriptPromise = null;
+      const stale = document.getElementById(DESMOS_SCRIPT_ID);
+      stale?.remove();
+      reject(error);
+    };
+
     const existingScript = document.getElementById(DESMOS_SCRIPT_ID) as
       | HTMLScriptElement
       | null;
@@ -95,7 +102,7 @@ function ensureDesmosScript(apiKey: string): Promise<void> {
       existingScript.addEventListener("load", () => resolve(), { once: true });
       existingScript.addEventListener(
         "error",
-        () => reject(new Error("Unable to load the Desmos calculator.")),
+        () => fail(new Error("Unable to load the Desmos calculator.")),
         { once: true },
       );
       return;
@@ -106,7 +113,7 @@ function ensureDesmosScript(apiKey: string): Promise<void> {
     script.src = `https://www.desmos.com/api/v1.11/calculator.js?apiKey=${encodeURIComponent(apiKey)}`;
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Unable to load the Desmos calculator."));
+    script.onerror = () => fail(new Error("Unable to load the Desmos calculator."));
     document.head.appendChild(script);
   });
 
