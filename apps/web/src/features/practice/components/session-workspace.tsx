@@ -664,12 +664,14 @@ export function SessionWorkspace({ initialSession }: Props) {
                 </div>
               ) : shouldUseEmbeddedGraphing ? (
                 <div style={embeddedGraphingLayoutStyle}>
-                  <p style={calculatorStatusHintStyle}>
-                    {calculatorStatusMessage
-                      ?? (hasDesmosApiKey
-                        ? "Using the embedded graphing calculator while the interactive tools finish loading."
-                        : "Using the embedded graphing calculator because no Desmos API key is configured. Add DESMOS_API_KEY to your deployment environment (e.g. Vercel project settings).")}
-                  </p>
+                  {(calculatorStatusMessage ?? (hasDesmosApiKey
+                    ? "Using the embedded graphing calculator while the interactive tools finish loading."
+                    : null)) && (
+                    <p style={calculatorStatusHintStyle}>
+                      {calculatorStatusMessage
+                        ?? "Using the embedded graphing calculator while the interactive tools finish loading."}
+                    </p>
+                  )}
                   <div style={graphViewportShellStyle}>
                     <iframe
                       title="graphing calculator"

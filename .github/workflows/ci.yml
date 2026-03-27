@@ -1,75 +1,50 @@
-# Injects secrets into the job environment on each push (nothing is written to the repo).
+# Builds the Next.js app in GitHub Actions (where all secrets are available)
+# and deploys the pre-built output to Vercel.
 #
-# Supabase in this project (see apps/web/src/server/db/client.ts, env.ts):
-# - Server REST/PostgREST calls use NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
-# - NEXT_PUBLIC_SUPABASE_ANON_KEY is required by env parsing for future browser Auth (login/signup
-#   still use mock copy today; see apps/web/src/features/auth/mock-auth.ts).
-# - DATABASE_URL is the Postgres connection string (migrations / ORM); required by env.ts.
+# GitHub is the single source of truth for all secrets.
+# Vercel's Git-triggered builds are disabled; CI handles the full pipeline.
 #
-# GitHub: Settings → Secrets and variables → Actions.
-# Prefer secret names that match the env var names below (easiest to mirror .env).
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#
+#   Vercel:
+#     VERCEL_TOKEN             – https://vercel.com/account/tokens
+#     VERCEL_ORG_ID            – from .vercel/project.json (run `vercel link` locally once)
+#     VERCEL_PROJECT_ID        – from .vercel/project.json
+#
+#   Supabase + DB:
+#     NEXT_PUBLIC_SUPABASE_URL
+#     NEXT_PUBLIC_SUPABASE_ANON_KEY
+#     SUPABASE_SERVICE_ROLE_KEY
+#     DATABASE_URL
+#
+#   AI / Integrations:
+#     OPENAI_API_KEY
+#     DESMOS_API_KEY
 
-name: CI
+name: CI & Deploy
 
 on:
   push:
+    branches: [main]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     env:
-      # Supabase + DB (required for apps/web/src/server/env.ts)
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # App env vars — available during build so next.config.ts can bake NEXT_PUBLIC_* into the bundle
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      # AI / optional Desmos (OpenAI models default to gpt-5.4-nano in apps/web/src/server/env.ts)
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      # Same secret as repo "DESMOS_API_KEY"; both names are set so next.config + /api/desmos/config see it.
       DESMOS_API_KEY: ${{ secrets.DESMOS_API_KEY }}
       NEXT_PUBLIC_DESMOS_API_KEY: ${{ secrets.DESMOS_API_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Verify Supabase CLI
-        run: supabase --version
-
-      - name: Verify required secrets are present
-        # Does not print secret values (printenv only checks presence).
-        run: |
-          missing=0
-          for var in \
-            NEXT_PUBLIC_SUPABASE_URL \
-            NEXT_PUBLIC_SUPABASE_ANON_KEY \
-            SUPABASE_SERVICE_ROLE_KEY \
-            DATABASE_URL \
-            OPENAI_API_KEY
-          do
-            val=$(printenv "$var" 2>/dev/null || true)
-            if [ -z "$val" ]; then
-              echo "::error::$var is not set. Add a repository secret with this name."
-              missing=1
-            fi
-          done
-          if [ -z "$(printenv NEXT_PUBLIC_DESMOS_API_KEY 2>/dev/null || true)" ]; then
-            echo "::warning::DESMOS_API_KEY secret is empty; NEXT_PUBLIC_DESMOS_API_KEY will be unset in CI."
-          fi
-          if [ "$missing" -ne 0 ]; then
-            exit 1
-          fi
-          echo "Required env vars for apps/web/src/server/env.ts are available to subsequent steps."
-
-      # Remote migrations: add supabase/config.toml + SUPABASE_ACCESS_TOKEN, then e.g.:
-      #   supabase link --project-ref <ref>
-      #   supabase db push
-      # This repo currently only has SQL under supabase/migrations/ (no config.toml).
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -78,10 +53,68 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Verify required secrets
+        run: |
+          missing=0
+          for var in \
+            VERCEL_ORG_ID \
+            VERCEL_PROJECT_ID \
+            NEXT_PUBLIC_SUPABASE_URL \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            SUPABASE_SERVICE_ROLE_KEY \
+            DATABASE_URL \
+            OPENAI_API_KEY
+          do
+            if [ -z "$(printenv "$var" 2>/dev/null || true)" ]; then
+              echo "::error::$var is not set. Add it as a repository secret."
+              missing=1
+            fi
+          done
+          if [ -z "$(printenv DESMOS_API_KEY 2>/dev/null || true)" ]; then
+            echo "::warning::DESMOS_API_KEY is empty; Desmos interactive calculator will be unavailable."
+          fi
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "::error::VERCEL_TOKEN is not set. Create one at https://vercel.com/account/tokens"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      # Sync all runtime env vars to Vercel so server-side API routes
+      # (e.g. /api/desmos/config, OpenAI calls) can read them at request time.
+      - name: Sync environment variables to Vercel
+        run: |
+          sync() {
+            local name="$1" val="$2"
+            [ -z "$val" ] && return 0
+            vercel env rm "$name" production --yes --token="${{ secrets.VERCEL_TOKEN }}" 2>/dev/null || true
+            printf '%s' "$val" | vercel env add "$name" production --token="${{ secrets.VERCEL_TOKEN }}"
+          }
+          sync NEXT_PUBLIC_SUPABASE_URL      "$NEXT_PUBLIC_SUPABASE_URL"
+          sync NEXT_PUBLIC_SUPABASE_ANON_KEY "$NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          sync SUPABASE_SERVICE_ROLE_KEY     "$SUPABASE_SERVICE_ROLE_KEY"
+          sync DATABASE_URL                  "$DATABASE_URL"
+          sync OPENAI_API_KEY                "$OPENAI_API_KEY"
+          sync DESMOS_API_KEY                "$DESMOS_API_KEY"
+          sync NEXT_PUBLIC_DESMOS_API_KEY    "$NEXT_PUBLIC_DESMOS_API_KEY"
+
+      # Pull Vercel project config (.vercel/project.json, framework settings)
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
         working-directory: apps/web
 
+      # Build inside CI where all env vars are present.
+      # next.config.ts bakes NEXT_PUBLIC_* into the client JS bundle.
       - name: Build
-        run: npm run build
+        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+        working-directory: apps/web
+
+      - name: Deploy to Vercel
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}")
+          echo "Deployed to: $url"
+          echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
         working-directory: apps/web
